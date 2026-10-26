@@ -3,7 +3,6 @@ package com.dshpet.android
 import android.os.SystemClock
 import java.util.ArrayDeque
 import java.util.LinkedHashSet
-import kotlin.random.Random
 
 /**
  * 平台无关的直播互动事件。真实数据源必须先校验、再转换为此模型。
@@ -40,9 +39,12 @@ class LiveEventQueue(
         val id = event.eventId.trim().take(128)
         if (id.isEmpty() || !seen.add(id)) return false
         while (seen.size > dedupeCapacity) seen.remove(seen.first())
-        if (queue.size >= capacity) queue.removeFirst()
-        queue.addLast(event.copy(eventId = id))
-        return true
+        val pending = (queue.toList() + event.copy(eventId = id))
+            .sortedByDescending { priorityOf(it.type) }
+            .take(capacity.coerceAtLeast(1))
+        queue.clear()
+        queue.addAll(pending)
+        return pending.any { it.eventId == id }
     }
 
     @Synchronized
@@ -53,6 +55,15 @@ class LiveEventQueue(
 
     @Synchronized
     fun size(): Int = queue.size
+
+    private fun priorityOf(type: LiveEvent.Type): Int = when (type) {
+        LiveEvent.Type.BIG_GIFT -> 10
+        LiveEvent.Type.GIFT_COMBO -> 5
+        LiveEvent.Type.GIFT -> 4
+        LiveEvent.Type.FOLLOW -> 3
+        LiveEvent.Type.COMMENT_MENTION -> 2
+        LiveEvent.Type.LIKE -> 1
+    }
 }
 
 data class PetReaction(val message: String, val actionSlug: String, val priority: Int)
