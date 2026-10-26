@@ -633,6 +633,7 @@ class Pet(
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
+            val d = current ?: return
             val w = width.toFloat()
             val h = height.toFloat()
             val mirror = !forcedNoMirror && facing < 0
@@ -643,22 +644,11 @@ class Pet(
                 sy = Physics.squashScale(u, squashAmount)
             }
             canvas.save()
-            canvas.translate(w / 2f, h)
+            canvas.translate(w / 2f, h)          // 以脚底中点为锚点
             canvas.scale(if (mirror) -1f else 1f, sy.toFloat())
             canvas.translate(-w / 2f, -h)
-
-            // Some source archives omit the large animated WebP pack. Never leave the
-            // overlay completely invisible while an animation is missing: show the
-            // bundled vector pet as a visible, touchable fallback until a clip loads.
-            val d = current
-            if (d != null) {
-                d.setBounds(0, 0, width, height)
-                d.draw(canvas)
-            } else {
-                val fallback = context.getDrawable(R.drawable.whale_selfie)
-                fallback?.setBounds(0, 0, width, height)
-                fallback?.draw(canvas)
-            }
+            d.setBounds(0, 0, width, height)
+            d.draw(canvas)
             canvas.restore()
         }
 
