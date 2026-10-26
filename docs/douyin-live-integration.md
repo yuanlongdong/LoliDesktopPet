@@ -68,11 +68,19 @@
 - [互动工具接入指南](https://developer.open-douyin.com/docs/resource/zh-CN/live-interactive-tools/introduction/interactive-tools-guide) 当前页面明确提示“插件业务更新中，暂不准入新插件”。这意味着不能把新建插件作为已经可走通的即时方案。
 - [直播间礼物互动能力](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/jierushuoming/hudongshuju/liwushuju) 说明礼物数据推送需要申请对应能力，并通过启动任务等接口启用推送。
 
-因此实际工程分成两条路线：
-1. **先做可验证的 Android 桌宠本体**：事件桥接、动作映射、优先级、构建与 APK 产物，独立于平台授权。
-2. **真实直播接入**：只有在账号/应用获得相应开放能力后，才能实现官方插件或服务端数据推送适配。若平台不批准新插件，必须改走其他获准的数据来源，不能靠页面抓取、Cookie 或协议逆向替代。
+因此实际工程分成三部分：
 
-公开文档核查不是权限审批结果；本仓库没有抖音应用凭证，也没有声称已取得平台授权。官方参考链接：
-- https://developer.open-douyin.com/docs/resource/zh-CN/live-interactive-tools/development/tutorial/app-interaction-guide
-- https://developer.open-douyin.com/docs/resource/zh-CN/live-interactive-tools/introduction/interactive-tools-guide
-- https://developer.open-douyin.com/docs/resource/zh-CN/interaction/jierushuoming/hudongshuju/liwushuju
+1. **Android 桌宠本体**：保留离线动画、台词、悬浮窗和内部事件桥接。当前 APK 没有网络权限，也没有直接读取抖音直播数据。
+2. **互动规则原型**：`docs/douyin-live-demo.html` 只用于本地模拟和验证动作逻辑，模拟事件不会被标成真实数据。
+3. **官方真实直播路线**：在 `douyin-live-play/` 中新增 Unity LiveOpenSDK 客户端适配器、角色 Animator 触发器、抖音云开始/回调/结束函数及启动清理组件。它的目标是构建一个经审核的抖音直播小玩法，而不是让普通 Android APK 借直播事件控制独立悬浮窗。
+
+新增的真实接入源码与步骤见：[douyin-live-play/README.md](../douyin-live-play/README.md)。源码已写入功能分支，但尚未安装官方 SDK、配置 AppID/抖音云环境、取得能力审批或在真实直播间联调。不能把它称为已经接通。
+
+未经授权的页面抓取、协议逆向、账号 Cookie 采集不作为实现路径。公开文档核查不是权限审批结果；本仓库没有抖音应用凭证，也没有声称已取得平台授权。
+
+官方参考：
+- [互动工具接入指南](https://developer.open-douyin.com/docs/resource/zh-CN/live-interactive-tools/introduction/interactive-tools-guide)，当前注明暂不准入新插件。
+- [抖音云接入指南](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/develop/douyincloud/guide)，展示官方云函数和 WebSocket 消息链路。
+- [直播玩法简介](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/introduction/live-play/1)，说明直播玩法必须本身提供互动玩法内容。
+- [手机开播云启动适配](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/develop/unity-sdk/cloud-sync/mobile-live-integration)。
+
