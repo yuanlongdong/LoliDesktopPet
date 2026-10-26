@@ -18,11 +18,11 @@ import urllib.error
 import urllib.request
 
 
-def first_int(*values, default=1):
+def first_int(*values, default=1, minimum=1):
     for value in values:
         try:
             if value is not None:
-                return max(1, int(value))
+                return max(minimum, int(value))
         except (TypeError, ValueError):
             continue
     return default
@@ -46,9 +46,7 @@ def adapt(event):
         return {"type": "comment", "user": user, "text": str(data.get("content") or data.get("text") or "")}
     if kind == "gift":
         count = first_int(data.get("repeatCount"), data.get("comboCount"), data.get("groupCount"), default=1)
-        unit = first_int(data.get("diamondCount"), data.get("diamond_count"), default=0)
-        if unit == 1 and not any(k in data for k in ("diamondCount", "diamond_count")):
-            unit = 0
+        unit = first_int(data.get("diamondCount"), data.get("diamond_count"), default=0, minimum=0)
         return {
             "type": "gift",
             "user": user,
