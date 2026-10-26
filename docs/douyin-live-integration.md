@@ -58,3 +58,21 @@
 - 连续礼物可以合并，静音模式只显示字幕，清空日志可重置计数。
 - 页面手机可用、无第三方 CDN 或依赖。
 - 文档不声称真实抖音事件已接通。
+
+
+## 官方接入路径核查（2026-10-26）
+
+核对了抖音开放平台的公开文档后，当前不能把普通 Android APK 直接当成官方直播事件订阅端：
+
+- [互动工具开发者指南（抖音 App + 直播伴侣）](https://developer.open-douyin.com/docs/resource/zh-CN/live-interactive-tools/development/tutorial/app-interaction-guide) 描述的是抖音直播互动插件：在平台环境内申请能力，插件卡片通过 `tt.subscribeLiveInteractPluginMessage` 订阅 `live_like`、`live_comment`、`live_gift`、`live_follow` 等开放消息。
+- [互动工具接入指南](https://developer.open-douyin.com/docs/resource/zh-CN/live-interactive-tools/introduction/interactive-tools-guide) 当前页面明确提示“插件业务更新中，暂不准入新插件”。这意味着不能把新建插件作为已经可走通的即时方案。
+- [直播间礼物互动能力](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/jierushuoming/hudongshuju/liwushuju) 说明礼物数据推送需要申请对应能力，并通过启动任务等接口启用推送。
+
+因此实际工程分成两条路线：
+1. **先做可验证的 Android 桌宠本体**：事件桥接、动作映射、优先级、构建与 APK 产物，独立于平台授权。
+2. **真实直播接入**：只有在账号/应用获得相应开放能力后，才能实现官方插件或服务端数据推送适配。若平台不批准新插件，必须改走其他获准的数据来源，不能靠页面抓取、Cookie 或协议逆向替代。
+
+公开文档核查不是权限审批结果；本仓库没有抖音应用凭证，也没有声称已取得平台授权。官方参考链接：
+- https://developer.open-douyin.com/docs/resource/zh-CN/live-interactive-tools/development/tutorial/app-interaction-guide
+- https://developer.open-douyin.com/docs/resource/zh-CN/live-interactive-tools/introduction/interactive-tools-guide
+- https://developer.open-douyin.com/docs/resource/zh-CN/interaction/jierushuoming/hudongshuju/liwushuju
