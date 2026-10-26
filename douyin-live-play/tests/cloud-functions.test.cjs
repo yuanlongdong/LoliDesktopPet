@@ -119,3 +119,20 @@ test("finish_game stops all subscribed event tasks", async () => {
   assert.ok(ctx.calls.every(x => x.url.endsWith("/stop")));
   assert.deepEqual(ctx.calls.map(x => x.data.msg_type), ["live_comment", "live_like", "live_gift"]);
 });
+
+test("websocket_callback handles lifecycle events without echoing user payload", async () => {
+  const ctx = context({ headers: { "x-tt-event-type": "connect" } });
+  const result = await loadFunction("websocket_callback.ts")({ arbitrary: "viewer text" }, ctx);
+  assert.equal(result, "success");
+  assert.ok(ctx.logs.some(args => String(args[0]).includes("connected")));
+  assert.ok(!ctx.logs.some(args => args.join(" ").includes("viewer text")));
+});
+
+test("finish_game reports partial stop failures", async () => {
+  const ctx = context({ responses: [
+    { err_no: 0 }, { err_no: 7, err_msg: "cannot stop" }, { err_no: 0 }
+  ] });
+  const result = await loadFunction("finish_game.ts")({}, ctx);
+  assert.equal(result.err_no, 1);
+  assert.equal(result.data.live_like.ok, false);
+});
