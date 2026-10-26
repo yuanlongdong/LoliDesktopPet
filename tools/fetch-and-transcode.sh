@@ -14,7 +14,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 echo "==> npm pack dsh-pet"
-npm pack dsh-pet --pack-destination "$WORK" >/dev/null
+npm pack dsh-pet@0.3.8 --pack-destination "$WORK" >/dev/null
 TGZ="$(ls "$WORK"/dsh-pet-*.tgz | head -n1)"
 tar -xzf "$TGZ" -C "$WORK"
 
