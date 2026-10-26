@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "liveCards": [
+    "live-card/card"
+  ],
+  "window": {
+    "navigationBarTitleText": "桌宠直播互动",
+    "navigationBarBackgroundColor": "#161a21",
+    "navigationBarTextStyle": "white"
+  }
+}
