@@ -17,11 +17,13 @@
 
 - `Assets/Scripts/PetLiveReactionController.cs`：标准化事件队列、去重、频率控制、角色 Animator 触发、台词气泡、安全的评论指令白名单，以及“观众合力给桌宠充能”的循环玩法。
 - `Assets/Scripts/DouyinCloudMessageAdapter.cs`：接收 SDK 示例 `SampleDyCloudManager.OnDyCloudMessage`，解析官方云消息数组，处理真实事件并上报消息 ACK。
-- `Assets/Scripts/DouyinLivePlayBootstrap.cs`：初始化官方 SDK 示例管理器，依次调用 `/start_game`、连接 `/websocket_callback`，退出时调用 `/finish_game` 并关闭连接。
+- `Assets/Scripts/DouyinLivePlayBootstrap.cs`：初始化官方 SDK 示例管理器，直接等待官方抖音云 API 初始化完成；调用云函数时核验 HTTP 状态与 `err_no`；连接 `/websocket_callback` 后等待真实 SDK `OnOpen` 事件，超时或终态错误会触发失败清理；退出时调用 `/finish_game` 并关闭连接。
 - `cloud/start_game.ts`：按当前直播上下文开启点赞、评论、礼物三个推送任务。
 - `cloud/finish_game.ts`：一局结束时停止这三个任务，避免游戏结束后继续消费事件。
 - `cloud/live_data_callback.ts`：接收抖音云内网回调，并按每条指令独立推送到官方 WebSocket 网关，保留各自 `msg_id`，供客户端完成动作后逐条上报履约。
 - `cloud/websocket_callback.ts`：记录客户端连接状态，不记录观众评论内容。
+
+云端逻辑测试可在 `douyin-live-play/` 下运行 `npm install` 后执行 `npm run test:cloud`。测试覆盖云函数 TypeScript 类型检查、启动与回滚、按消息 ID 独立推送、网关失败处理、缺少必要请求头，以及结束任务；测试使用隔离的 SDK mock，不代表真实抖音平台联调成功。
 
 这些是已写入仓库的源码，**不是已部署的云服务，也不是已通过抖音审核的产品**。Bootstrap 是接线骨架，仍需在安装了正确版本官方 Unity SDK 和 Samples 的实际项目中编译、联调。我没有你的抖音开放平台 AppID、抖音云 EnvID/ServiceID 或已审批的互动数据能力，所以目前不能宣称收到真实直播事件或已完成手机端开播联调。
 
@@ -80,7 +82,9 @@
 ## 当前验收状态
 
 - [x] 写入客户端事件消费与反应映射代码
-- [x] 写入抖音云三个函数源码
+- [x] 写入抖音云四个函数源码（启动、回调、WebSocket 生命周期、结束）
+- [x] 增加云函数可重复的本地测试（逻辑与类型检查）
+- [x] 启动器检查云函数 HTTP 状态并等待 WebSocket `OnOpen`
 - [ ] 安装官方 SDK 与真实 AppID
 - [ ] 配置并部署抖音云 dev 环境
 - [ ] 提案通过并开通直播互动数据权限
