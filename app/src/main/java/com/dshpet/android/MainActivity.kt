@@ -11,7 +11,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
+import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -23,7 +26,7 @@ private const val REQ_LINES_EXPORT = 1002
 private const val REQ_LINES_IMPORT = 1003
 
 /**
- * 设置界面：授权 + 开关 + 大小 + 只数 + 碎碎念/贴边躲藏 + 音效 + 台词库。
+ * 设置界面：授权 + 开关 + 大小 + 只数 + 碎碎念/贴边躲藏 + 音效 + 台词库 + 直播联动。
  * 刻意不用任何第三方 UI 库（零依赖构建，包体只有素材）。
  */
 class MainActivity : Activity() {
@@ -45,6 +48,11 @@ class MainActivity : Activity() {
     private lateinit var btnLinesExport: TextView
     private lateinit var btnLinesImport: TextView
     private lateinit var btnLinesReload: TextView
+    private lateinit var btnLive: TextView
+    private lateinit var inputLiveHost: EditText
+    private lateinit var inputLivePort: EditText
+    private lateinit var btnLiveTest: TextView
+    private lateinit var liveStatus: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +75,11 @@ class MainActivity : Activity() {
         btnLinesExport = findViewById(R.id.btnLinesExport)
         btnLinesImport = findViewById(R.id.btnLinesImport)
         btnLinesReload = findViewById(R.id.btnLinesReload)
+        btnLive = findViewById(R.id.btnLive)
+        inputLiveHost = findViewById(R.id.inputLiveHost)
+        inputLivePort = findViewById(R.id.inputLivePort)
+        btnLiveTest = findViewById(R.id.btnLiveTest)
+        liveStatus = findViewById(R.id.liveStatus)
 
         // 宠物名字来自 pet-config.json（现在是「大肥鱼」）
         try {
@@ -154,6 +167,41 @@ class MainActivity : Activity() {
             applyKeepAlive(on, true)
             Sfx.press()
         }
+
+        // 直播联动开关：默认关闭（不开就不联网）。改了要重建悬浮窗才生效。
+        btnLive.setOnClickListener {
+            val on = !Prefs.liveOn(this)
+            Prefs.setLiveOn(this, on)
+            chipLive(on)
+            refreshLiveInputs()
+            reloadIfRunning()
+        }
+
+        // 桥地址/端口：边改边存，重开「放出来」或改开关后生效
+        bindLiveInput(inputLiveHost) { Prefs.setLiveHost(this, it) }
+        bindLiveInput(inputLivePort) { s ->
+            val p = s.toIntOrNull() ?: Prefs.DEFAULT_LIVE_PORT
+            Prefs.setLivePort(this, p)
+        }
+
+        // 测试按钮：不依赖桥，让桌宠当场对一条随机演示事件做出反应
+        btnLiveTest.setOnClickListener {
+            if (!Prefs.liveOn(this)) {
+                Toast.makeText(this, getString(R.string.live_demo_need_on), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            PetService.liveDemo(this)
+        }
+        btnLiveTest.setOnLongClickListener {
+            // 长按：即使没开联动，也临时触发一次，方便先看效果（不写配置）
+            PetService.liveDemo(this)
+            true
+        }
+
+        // 初始灌入已保存的桥配置
+        inputLiveHost.setText(Prefs.liveHost(this))
+        inputLivePort.setText(Prefs.livePort(this).toString())
+        refreshLiveInputs()
 
         // 台词库：在 app 里直接改（按情境分类，一行一句）
         btnLinesEdit.setOnClickListener {
@@ -369,6 +417,38 @@ class MainActivity : Activity() {
         btnPets.setTextColor(if (multi) Color.parseColor("#6BE3B0") else Color.parseColor("#B9A6FF"))
     }
 
+    /** 直播联动开关态（两态胶囊） */
+    private fun chipLive(on: Boolean) {
+        btnLive.text = getString(if (on) R.string.live_on else R.string.live_off)
+        btnLive.setBackgroundResource(if (on) R.drawable.bg_chip_ok else R.drawable.bg_chip_off)
+        btnLive.setTextColor(if (on) Color.parseColor("#6BE3B0") else Color.parseColor("#B9A6FF"))
+    }
+
+    /** 绑定一个输入框：仅在内容变化时回存，不反向覆盖光标位置 */
+    private fun bindLiveInput(view: EditText, save: (String) -> Unit) {
+        view.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                save(s?.toString().orEmpty())
+            }
+        })
+    }
+
+    /** 联动相关的输入/按钮只在开关打开时可编辑 */
+    private fun refreshLiveInputs() {
+        val on = Prefs.liveOn(this)
+        inputLiveHost.isEnabled = on
+        inputLivePort.isEnabled = on
+        btnLiveTest.isEnabled = on
+        val host = Prefs.liveHost(this)
+        liveStatus.text = when {
+            !on -> getString(R.string.live_off)
+            host.isEmpty() -> getString(R.string.live_host_hint)
+            else -> "桥 ${host}:${Prefs.livePort(this)} · 断线会自动重连"
+        }
+    }
+
     private fun refresh() {
         chip(statusOverlay, Settings.canDrawOverlays(this), R.string.chip_ok, R.string.chip_no)
         chip(statusNotif, hasNotif(), R.string.chip_ok, R.string.chip_no)
@@ -386,6 +466,8 @@ class MainActivity : Activity() {
         chipToggle(btnEdge, Prefs.edgeHideOn(this))
         chipPets(Prefs.petCount(this))
         chipToggle(btnKeepAlive, Prefs.keepAlive(this))
+        chipLive(Prefs.liveOn(this))
+        refreshLiveInputs()
     }
 
     /**

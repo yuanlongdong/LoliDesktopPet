@@ -24,7 +24,7 @@ import kotlin.random.Random
  *  - 角落定位          → src/shared/motion.ts anchorPixel()
  *  - 动画链权重        → assets/config.jsonc animationWeights + categories
  * 手机端去掉了对话/余额/通知，因此没有任何网络与 LLM 调用（v1.6 起加了本地台词气泡，
- * 台词全部来自 assets/lines.json，不联网）。
+ * 台词全部来自 assets/lines.json，不联网；v1.9 起有可选的「直播联动」，默认关闭）。
  */
 class Pet(
     private val context: Context,
@@ -612,6 +612,12 @@ class Pet(
         facing = if (facing == 1) -1 else 1
         forcedNoMirror = false
         canvasView.invalidate()
+    }
+
+    /** 直播联动 / 外部事件用：Q 弹一下，并把她从躲藏状态叫醒 */
+    fun bounce(amount: Double = Physics.SQ_SQUASH) {
+        wake()
+        squash(amount)
     }
 
     // ---------------------------------------------------------------- 画布
