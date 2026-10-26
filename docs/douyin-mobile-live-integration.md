@@ -48,6 +48,7 @@ Android 桌宠已有内部入口 `PetService.submitLiveEvent(...)` 与 `PetReact
 
 - 新增 `douyin-live-play/Assets/Scripts/PetLiveReactionController.cs`：标准化事件队列、去重、限流、Animator Trigger 和台词气泡。
 - 新增 `douyin-live-play/Assets/Scripts/DouyinCloudMessageAdapter.cs`：对接官方 Unity SDK 示例 `SampleDyCloudManager.OnDyCloudMessage`，解析消息数组，跳过平台测试事件，并在处理后发送 ACK。
+- 新增 `douyin-live-play/Assets/Scripts/DouyinLivePlayBootstrap.cs`：接线官方 SDK 初始化、`/start_game`、WebSocket 连接、`/finish_game` 清理等生命周期。
 - 新增 `douyin-live-play/cloud/start_game.ts`：按当前直播上下文启动点赞、评论、礼物推送任务。
 - 新增 `douyin-live-play/cloud/live_data_callback.ts`：接收抖音云内网回调并向官方 WebSocket 网关推送事件。
 - 新增 `douyin-live-play/cloud/websocket_callback.ts`：记录 WebSocket 生命周期状态，不记录弹幕原文。
