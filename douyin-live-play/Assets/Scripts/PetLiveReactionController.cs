@@ -163,7 +163,7 @@ namespace LoliDesktopPet.DouyinLivePlay
             {
                 try
                 {
-                    LiveOpenSdk.MessageAckService.ReportAck(next.EventId, next.Type);
+                    LiveOpenSdk.Instance.GetMessageAckService().ReportAck(next.EventId, next.Type);
                 }
                 catch (Exception ex)
                 {
