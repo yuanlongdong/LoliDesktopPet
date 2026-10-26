@@ -146,7 +146,7 @@ namespace LoliDesktopPet.DouyinLivePlay
         private async Task ConnectAndVerifyWebSocketAsync()
         {
             var webSocket = LiveOpenSdk.DyCloudApi.WebSocket;
-            socketOpened = new TaskCompletionSource<bool>();
+            socketOpened = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             // SampleDyCloudManager.ConnectWebSocket logs and swallows connection exceptions,
             // so independently wait for the SDK's actual OnOpen event.
