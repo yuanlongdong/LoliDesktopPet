@@ -11,8 +11,8 @@ android {
         applicationId = "com.dshpet.android"
         minSdk = 28
         targetSdk = 34
-        versionCode = 12
-        versionName = "1.8.1"
+        versionCode = 13
+        versionName = "1.8.2"
     }
 
     buildTypes {
