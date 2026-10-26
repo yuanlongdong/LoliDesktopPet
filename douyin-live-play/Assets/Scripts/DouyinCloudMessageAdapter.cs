@@ -37,7 +37,7 @@ namespace LoliDesktopPet.DouyinLivePlay
         }
 
         /// <summary>
-        /// Call once after SampleDyCloudManager has been initialized and its WebSocket connected.
+        /// Subscribe before WebSocket connection so the first incoming event cannot be missed.
         /// </summary>
         public void Bind(SampleDyCloudManager source)
         {
