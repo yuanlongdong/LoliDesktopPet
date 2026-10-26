@@ -156,21 +156,28 @@ namespace LoliDesktopPet.DouyinLivePlay
             }
             if (next == null) return;
 
-            ApplyReaction(next);
-            // Report fulfillment only after the reaction was actually applied to the scene.
-            // The platform uses this for end-to-end interaction latency/fulfillment metrics.
-            try
+            bool visiblyApplied = ApplyReaction(next);
+            // Platform fulfillment means the event produced a visible reaction, not merely
+            // that it entered the queue or passed through this method.
+            if (visiblyApplied)
             {
-                LiveOpenSdk.MessageAckService.ReportAck(next.EventId, next.Type);
+                try
+                {
+                    LiveOpenSdk.MessageAckService.ReportAck(next.EventId, next.Type);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[PetLiveReaction] Interaction ACK failed: " + ex.Message);
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogWarning("[PetLiveReaction] Interaction ACK failed: " + ex.Message);
+                Debug.LogWarning("[PetLiveReaction] No visible reaction could be rendered; ACK was not sent for " + next.EventId);
             }
             nextReactionAt = Time.unscaledTime + Mathf.Max(0f, minimumReactionGapSeconds);
         }
 
-        private void ApplyReaction(PetLiveEvent e)
+        private bool ApplyReaction(PetLiveEvent e)
         {
             string name = PetLiveEvent.CleanNickname(e.Nickname);
             int count = Mathf.Clamp(e.Count, 1, 9999);
@@ -207,9 +214,13 @@ namespace LoliDesktopPet.DouyinLivePlay
             }
 
             UpdateEnergyUI();
-            FireTrigger(trigger);
-            if (roundCompleted) FireTrigger("Cheer");
-            ShowBubble(line);
+            bool triggerApplied = FireTrigger(trigger);
+            bool cheerApplied = roundCompleted && FireTrigger("Cheer");
+            bool bubbleApplied = ShowBubble(line);
+            bool energyUiVisible =
+                (energySlider != null && energySlider.gameObject.activeInHierarchy) ||
+                (energyText != null && energyText.gameObject.activeInHierarchy);
+            return triggerApplied || cheerApplied || bubbleApplied || energyUiVisible;
         }
 
         private int EnergyForEvent(PetLiveEvent e, string trigger)
@@ -278,30 +289,42 @@ namespace LoliDesktopPet.DouyinLivePlay
             }
         }
 
-        private void FireTrigger(string trigger)
+        private bool FireTrigger(string trigger)
         {
-            if (petAnimator == null || string.IsNullOrEmpty(trigger)) return;
+            if (petAnimator == null || string.IsNullOrEmpty(trigger)) return false;
             if (!triggerNames.Contains(trigger))
             {
                 Debug.LogWarning("[PetLiveReaction] Animator trigger not configured: " + trigger);
-                return;
+                return false;
             }
             petAnimator.ResetTrigger(trigger);
             petAnimator.SetTrigger(trigger);
+            return true;
         }
 
-        private void ShowBubble(string message)
+        private bool ShowBubble(string message)
         {
-            if (bubbleText != null) bubbleText.text = message;
+            bool visible = false;
+            if (bubbleText != null)
+            {
+                bubbleText.text = message;
+                if (bubbleGroup == null)
+                {
+                    bubbleText.gameObject.SetActive(true);
+                    visible = bubbleText.gameObject.activeInHierarchy;
+                }
+            }
             if (bubbleGroup != null)
             {
                 bubbleGroup.alpha = 1f;
                 bubbleGroup.interactable = false;
                 bubbleGroup.blocksRaycasts = false;
                 bubbleGroup.gameObject.SetActive(true);
+                visible = bubbleGroup.gameObject.activeInHierarchy;
             }
-            hasBubble = true;
+            hasBubble = visible;
             bubbleUntil = Time.unscaledTime + Mathf.Max(0.5f, bubbleDurationSeconds);
+            return visible;
         }
 
         private void HideBubble()
@@ -312,6 +335,10 @@ namespace LoliDesktopPet.DouyinLivePlay
                 bubbleGroup.interactable = false;
                 bubbleGroup.blocksRaycasts = false;
                 bubbleGroup.gameObject.SetActive(false);
+            }
+            else if (bubbleText != null)
+            {
+                bubbleText.gameObject.SetActive(false);
             }
             hasBubble = false;
         }
