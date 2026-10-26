@@ -17,12 +17,13 @@
 
 - `Assets/Scripts/PetLiveReactionController.cs`：标准化事件队列、去重、频率控制、角色 Animator 触发、台词气泡、安全的评论指令白名单。
 - `Assets/Scripts/DouyinCloudMessageAdapter.cs`：接收 SDK 示例 `SampleDyCloudManager.OnDyCloudMessage`，解析官方云消息数组，处理真实事件并上报消息 ACK。
+- `Assets/Scripts/DouyinLivePlayBootstrap.cs`：初始化官方 SDK 示例管理器，依次调用 `/start_game`、连接 `/websocket_callback`，退出时调用 `/finish_game` 并关闭连接。
 - `cloud/start_game.ts`：按当前直播上下文开启点赞、评论、礼物三个推送任务。
 - `cloud/finish_game.ts`：一局结束时停止这三个任务，避免游戏结束后继续消费事件。
 - `cloud/live_data_callback.ts`：接收抖音云内网回调，并将原始事件批次推送到官方 WebSocket 网关。
 - `cloud/websocket_callback.ts`：记录客户端连接状态，不记录观众评论内容。
 
-这些是已写入仓库的源码，**不是已部署的云服务，也不是已通过抖音审核的产品**。我没有你的抖音开放平台 AppID、抖音云 EnvID/ServiceID 或已审批的互动数据能力，所以目前不能宣称收到真实直播事件或已完成手机端开播联调。
+这些是已写入仓库的源码，**不是已部署的云服务，也不是已通过抖音审核的产品**。Bootstrap 是接线骨架，仍需在安装了正确版本官方 Unity SDK 和 Samples 的实际项目中编译、联调。我没有你的抖音开放平台 AppID、抖音云 EnvID/ServiceID 或已审批的互动数据能力，所以目前不能宣称收到真实直播事件或已完成手机端开播联调。
 
 ## 运行前置条件
 
@@ -59,4 +60,4 @@
 - [ ] 在真实手机直播间验证点赞、评论、礼物触发
 - [ ] 完成角色美术/动画资产接入
 
-在最后四项完成前，不得把当前版本称为端到端已接通。
+在全部未完成验收项完成前，不得把当前版本称为端到端已接通。
