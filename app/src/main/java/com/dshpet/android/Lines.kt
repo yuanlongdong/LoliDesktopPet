@@ -124,6 +124,8 @@ class Lines private constructor(
         val CATEGORY_ORDER = listOf(
             "greet", "idle", "tapped", "drag", "morning", "noon",
             "night", "late", "edge", "summon", "busy",
+            // 直播联动
+            "gift", "giftBig", "follow", "like", "comment", "enter",
         )
 
         private val LABELS = mapOf(
@@ -131,6 +133,9 @@ class Lines private constructor(
             "drag" to "被拖／甩出", "morning" to "早上", "noon" to "中午",
             "night" to "晚上", "late" to "深夜", "edge" to "贴边躲藏",
             "summon" to "让她说句话", "busy" to "久没人理",
+            // 直播联动
+            "gift" to "收到礼物", "giftBig" to "大额礼物", "follow" to "收到关注",
+            "like" to "收到点赞", "comment" to "弹幕互动", "enter" to "有观众进场",
         )
 
         fun labelOf(category: String): String = LABELS[category] ?: category

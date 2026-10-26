@@ -13,12 +13,18 @@ object Prefs {
     private const val KEY_PETS = "pet_count"
     private const val KEY_BUBBLE = "bubble_on"
     private const val KEY_EDGE_HIDE = "edge_hide"
+    private const val KEY_LIVE_ON = "live_on"
+    private const val KEY_LIVE_HOST = "live_host"
+    private const val KEY_LIVE_PORT = "live_port"
 
     const val DEFAULT_SIZE_DP = 150
     const val MIN_SIZE_DP = 80
     const val MAX_SIZE_DP = 360
     const val MIN_PETS = 1
     const val MAX_PETS = 3
+
+    /** 直播联动默认桥端口（tools/live-bridge 的默认端口） */
+    const val DEFAULT_LIVE_PORT = 17632
 
     private fun sp(ctx: Context) = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
@@ -74,5 +80,28 @@ object Prefs {
 
     fun setKeepAliveAsked(ctx: Context, v: Boolean) {
         sp(ctx).edit().putBoolean(KEY_KEEP_ALIVE_ASKED, v).apply()
+    }
+
+    // ---- 直播联动（抖音直播间事件 → 桌宠反应）----
+
+    /** 直播联动总开关，默认关闭（不开就不联网，保持离线） */
+    fun liveOn(ctx: Context): Boolean = sp(ctx).getBoolean(KEY_LIVE_ON, false)
+
+    fun setLiveOn(ctx: Context, v: Boolean) {
+        sp(ctx).edit().putBoolean(KEY_LIVE_ON, v).apply()
+    }
+
+    /** 桥的地址（PC/服务器 IP 或域名） */
+    fun liveHost(ctx: Context): String = sp(ctx).getString(KEY_LIVE_HOST, "").orEmpty().trim()
+
+    fun setLiveHost(ctx: Context, v: String) {
+        sp(ctx).edit().putString(KEY_LIVE_HOST, v.trim()).apply()
+    }
+
+    /** 桥的端口 */
+    fun livePort(ctx: Context): Int = sp(ctx).getInt(KEY_LIVE_PORT, DEFAULT_LIVE_PORT).coerceIn(1, 65535)
+
+    fun setLivePort(ctx: Context, p: Int) {
+        sp(ctx).edit().putInt(KEY_LIVE_PORT, p.coerceIn(1, 65535)).apply()
     }
 }

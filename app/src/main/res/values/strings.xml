@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">大肥鱼桌宠</string>
     <string name="pet_name_default">大肥鱼</string>
-    <string name="subtitle">桌宠 · DeepSeek 二创 · 离线不联网</string>
+    <string name="subtitle">桌宠 · DeepSeek 二创 · 默认离线 · 可选直播联动</string>
 
     <string name="channel_name">大肥鱼常驻</string>
     <string name="notif_title">大肥鱼在桌面上</string>
@@ -67,6 +67,18 @@
 
     <string name="keepalive_title">后台保活</string>
     <string name="keepalive_hint">开启后：从「最近任务」里隐藏（清后台时不容易被误删），被系统回收会自动回来，并申请「忽略电池优化」。部分机型还要在系统设置里允许自启动。</string>
+
+    <!-- 直播联动 -->
+    <string name="live_title">直播联动</string>
+    <string name="live_hint">开着后，桌宠会对直播间里的礼物 / 关注 / 点赞 / 弹幕 / 进场做出反应（说台词 + 播庆祝动画 + 弹一下）。默认不联网，只有打开本开关才会去连桥。</string>
+    <string name="live_host_label">桥地址</string>
+    <string name="live_host_hint">在电脑上跑 tools/live-bridge 后，填那台电脑的局域网 IP，例如 192.168.1.100</string>
+    <string name="live_port_label">端口</string>
+    <string name="live_btn_test">🎁 测试：来一条</string>
+    <string name="live_on">开启</string>
+    <string name="live_off">关闭</string>
+    <string name="live_demo_need_on">先打开「直播联动」才能测试反应。</string>
+    <string name="live_bridge_howto">没跑桥也能用：点「测试：来一条」就能让桌宠当场反应。接真直播数据需要在自己的电脑上跑 tools/live-bridge 桥（见 tools/live-bridge/protocol.md），把电脑 IP 和端口填到上面。</string>
 
     <string name="menu_title">选择动作</string>
 
