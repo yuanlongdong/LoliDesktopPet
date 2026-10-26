@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using ByteDance.LiveOpenSdk;
 using ByteDance.LiveOpenSdk.DyCloud;
 using Douyin.LiveOpenSDK.Samples;
 using UnityEngine;
@@ -112,22 +111,7 @@ namespace LoliDesktopPet.DouyinLivePlay
             {
                 Debug.LogError("[PetLiveAdapter] Failed to process cloud event: " + ex.Message);
             }
-            finally
-            {
-                // Acknowledge the outer gateway message after processing to prevent repeated delivery.
-                // The SDK sample exposes this exact acknowledgement API.
-                if (!string.IsNullOrWhiteSpace(message.MsgId) && !string.IsNullOrWhiteSpace(message.MsgType))
-                {
-                    try
-                    {
-                        LiveOpenSdk.MessageAckService.ReportAck(message.MsgId, message.MsgType);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogWarning("[PetLiveAdapter] Event ack failed: " + ex.Message);
-                    }
-                }
-            }
+
         }
 
         private static PlatformPayload[] ParsePayloads(string json)
