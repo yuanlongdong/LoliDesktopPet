@@ -20,7 +20,7 @@
 - `Assets/Scripts/DouyinLivePlayBootstrap.cs`：初始化官方 SDK 示例管理器，依次调用 `/start_game`、连接 `/websocket_callback`，退出时调用 `/finish_game` 并关闭连接。
 - `cloud/start_game.ts`：按当前直播上下文开启点赞、评论、礼物三个推送任务。
 - `cloud/finish_game.ts`：一局结束时停止这三个任务，避免游戏结束后继续消费事件。
-- `cloud/live_data_callback.ts`：接收抖音云内网回调，并将原始事件批次推送到官方 WebSocket 网关。
+- `cloud/live_data_callback.ts`：接收抖音云内网回调，并按每条指令独立推送到官方 WebSocket 网关，保留各自 `msg_id`，供客户端完成动作后逐条上报履约。
 - `cloud/websocket_callback.ts`：记录客户端连接状态，不记录观众评论内容。
 
 这些是已写入仓库的源码，**不是已部署的云服务，也不是已通过抖音审核的产品**。Bootstrap 是接线骨架，仍需在安装了正确版本官方 Unity SDK 和 Samples 的实际项目中编译、联调。我没有你的抖音开放平台 AppID、抖音云 EnvID/ServiceID 或已审批的互动数据能力，所以目前不能宣称收到真实直播事件或已完成手机端开播联调。
@@ -42,6 +42,13 @@
 5. 在玩法启动代码中初始化 LiveOpenSDK，设置真实 `AppId`，初始化 `SampleDyCloudManager` 的 `EnvId` / `ServiceId` 后连接抖音云，并调用本目录 `DouyinCloudMessageAdapter.Bind(manager)`。
 6. 在 Unity 场景中挂载 `PetLiveReactionController`，绑定角色 Animator 与可选的气泡 UI。Animator 需要配置以下 Trigger 名称：`Like`、`Comment`、`Gift`、`BigGift`、`Dance`、`Heart`、`Wave`、`Hug`。按实际角色动画命名可修改映射。
 7. 在抖音云 dev 环境完成联调，再按平台要求发布到正式环境和提审。不要把 App Secret、访问令牌或云端私钥提交到 Git。
+
+## 事件履约与失败处理
+
+- 客户端只在角色反应真正应用到场景后调用 SDK 的 `MessageAckService.ReportAck`，而不是一收到网络消息就提前确认。
+- 云端每条指令单独推送，保留平台的 `msg_id`，用于将履约回报对应到具体事件。
+- 启动任务时若点赞、评论、礼物中有任一项失败，会尝试停止已经成功启动的任务，避免半启动状态持续收数。
+- 这些逻辑仍需在真实 SDK 和抖音云 dev 环境联调，当前仓库代码本身不能证明平台已成功收到履约回报。
 
 ## 事件表现
 
