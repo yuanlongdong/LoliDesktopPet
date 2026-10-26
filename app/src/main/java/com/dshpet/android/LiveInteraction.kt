@@ -37,14 +37,17 @@ class LiveEventQueue(
     @Synchronized
     fun offer(event: LiveEvent): Boolean {
         val id = event.eventId.trim().take(128)
-        if (id.isEmpty() || !seen.add(id)) return false
-        while (seen.size > dedupeCapacity) seen.remove(seen.first())
+        if (id.isEmpty() || id in seen) return false
         val pending = (queue.toList() + event.copy(eventId = id))
             .sortedByDescending { priorityOf(it.type) }
             .take(capacity.coerceAtLeast(1))
+        // A low-priority event that loses the capacity contest must not poison deduplication.
+        if (pending.none { it.eventId == id }) return false
+        seen.add(id)
+        while (seen.size > dedupeCapacity.coerceAtLeast(1)) seen.remove(seen.first())
         queue.clear()
         queue.addAll(pending)
-        return pending.any { it.eventId == id }
+        return true
     }
 
     @Synchronized
