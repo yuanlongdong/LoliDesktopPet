@@ -13,9 +13,8 @@ export default async function (_params: unknown, context: any) {
   const liveContext = serviceContext.getContext();
   const appId = liveContext?.appId;
   const roomId = liveContext?.roomId;
-  const anchorOpenId = liveContext?.anchorOpenId;
 
-  if (!appId || !roomId || !anchorOpenId) {
+  if (!appId || !roomId) {
     context.error("start_game missing Douyin live context");
     return { err_no: 1, err_msg: "缺少抖音直播间上下文，无法开启互动推送" };
   }
