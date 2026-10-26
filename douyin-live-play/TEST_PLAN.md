@@ -5,7 +5,7 @@ This checklist distinguishes local logic checks from real platform acceptance. A
 ## 1. Local Unity scene checks
 
 - [ ] Import the official LiveOpenSDK Unity package and its sample code from the version approved for the app.
-- [ ] Confirm the project compiles with the imported SDK. The adapter currently targets the sample API names `SampleLiveOpenSdkManager`, `SampleDyCloudManager`, `OnDyCloudMessage`, and `DyCloudSocketMessage`; verify them against the exact package version.
+- [ ] Confirm the project compiles with the imported SDK. The adapter currently targets the sample API names `SampleLiveOpenSdkManager`, `SampleDyCloudManager`, `OnDyCloudMessage`, and `DyCloudSocketMessage`; verify them against the exact package version. The public docs describe LiveOpenSDK 2.0.0, so do not assume an older SDK sample is source-compatible.
 - [ ] Add an Animator with triggers `Like`, `Comment`, `Gift`, `BigGift`, `Dance`, `Heart`, `Wave`, `Hug`, and `Cheer`.
 - [ ] Wire `DouyinLivePlayBootstrap`, `DouyinCloudMessageAdapter`, and `PetLiveReactionController` in the scene. Assign the optional bubble and energy UI if present.
 - [ ] Use a dedicated development app ID and cloud environment. Never place app secrets or access tokens in Unity assets or source control.
@@ -45,7 +45,7 @@ Only mark the integration **LIVE VERIFIED** after all of the following are true:
 1. The Douyin open platform app and live mini-game category have the required permissions/admission.
 2. Cloud environment/service IDs and callback routing are configured in the platform console.
 3. A real authorized live room delivers a like, comment, and gift through the official event path.
-4. Unity logs show WebSocket open, incoming message IDs/types, the corresponding animation/bubble, and successful fulfillment ACK after the reaction is applied.
+4. Unity SDK logs confirm WebSocket open, incoming message IDs/types, the corresponding animation/bubble, and successful fulfillment ACK after the reaction is applied. A successful return from the sample's connect method alone is not sufficient.
 5. Verify an event is ACKed only if an Animator trigger was actually fired or a visible bubble/energy UI rendered; a queue-only receipt must not be ACKed.
 6. Repeated events, reconnects, shutdown, and task cleanup are checked.
 7. Platform console/log evidence is saved with timestamps.
