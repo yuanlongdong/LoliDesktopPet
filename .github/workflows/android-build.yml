@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   assemble-debug:
@@ -35,9 +35,21 @@ jobs:
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
 
-      - name: Upload debug APK
+      - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: LoliDesktopPet-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Publish v0.1.1 GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/douyin-live-interaction' && contains(github.event.head_commit.message, 'Publish v0.1.1 release')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create v0.1.1 app/build/outputs/apk/debug/*.apk \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "Loli Desktop Pet v0.1.1" \
+            --notes "Android debug build. Includes live-interaction event bridge and fixes for missing drawable and sound resources. Real Douyin live event ingestion is not connected; official platform authorization is still required." \
+            --latest
