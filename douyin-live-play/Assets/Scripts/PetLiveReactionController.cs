@@ -194,10 +194,6 @@ namespace LoliDesktopPet.DouyinLivePlay
                     line = "谢谢 " + name + " 送来的礼物 ×" + count + "！";
                     break;
 
-                case "live_follow":
-                    trigger = "Follow";
-                    line = "欢迎 " + name + "！";
-                    break;
             }
 
             int energyGain = EnergyForEvent(e, trigger);
