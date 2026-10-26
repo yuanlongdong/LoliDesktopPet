@@ -1,0 +1,10 @@
+{
+  "name": "loli-desktop-pet-douyin-live-play",
+  "private": true,
+  "scripts": {
+    "test:cloud": "node --test tests/cloud-functions.test.cjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

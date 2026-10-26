@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>直播桌宠 · 互动控制台</title>
+<style>
+:root{color-scheme:dark;--bg:#0c0f17;--panel:#151a26;--line:#283145;--muted:#8d99b3;--text:#eef2ff;--pink:#ff5c9a;--cyan:#64d8d0;--gold:#ffc96b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#27213c 0,transparent 38%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"PingFang SC",sans-serif}
+main{max-width:1080px;margin:auto;padding:24px 16px 40px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:22px}.eyebrow{color:var(--cyan);font-size:12px;letter-spacing:.16em;font-weight:800}.title{font-size:clamp(26px,5vw,42px);font-weight:850;letter-spacing:-.04em;margin:5px 0}.sub{color:var(--muted);max-width:660px}.pill{border:1px solid #58405d;color:#ffb5d1;background:#291827;border-radius:99px;padding:7px 11px;font-size:12px;white-space:nowrap}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.panel{background:linear-gradient(145deg,#191f2d,#121722);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 16px 40px #0002}.panel h2{font-size:16px;margin:0 0 4px}.hint{color:var(--muted);font-size:12px;margin-bottom:15px}
+.stage{min-height:245px;border-radius:15px;background:radial-gradient(ellipse at 50% 75%,#392544 0,transparent 48%),linear-gradient(160deg,#101521,#191b2a);border:1px solid #30344a;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}.stage:before{content:"";position:absolute;left:8%;right:8%;bottom:37px;height:1px;background:#45425c}.orb{width:105px;height:105px;border-radius:38% 48% 42% 48%;background:linear-gradient(145deg,#ffd4e7,#ff6baf 60%,#b04bff);box-shadow:0 0 45px #ff5c9a50;display:grid;place-items:center;font-size:54px;transition:transform .28s;z-index:1}.orb.pop{animation:pop .5s ease}.orb.shake{animation:shake .45s ease}.orb.heart{animation:heart .7s ease}.bubble{margin-top:17px;background:#f8f3ff;color:#252035;padding:9px 14px;border-radius:14px;max-width:90%;text-align:center;font-weight:700;z-index:1;min-height:38px}.status{position:absolute;top:12px;left:12px;color:var(--cyan);font-size:11px;background:#0b2227;border:1px solid #21444b;border-radius:99px;padding:5px 9px}
+@keyframes pop{50%{transform:translateY(-20px) scale(1.15) rotate(8deg)}}@keyframes shake{25%,75%{transform:translateX(-9px) rotate(-8deg)}50%{transform:translateX(9px) rotate(8deg)}}@keyframes heart{50%{transform:scale(1.2);filter:hue-rotate(40deg)}}
+.buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:13px}.event{border:1px solid var(--line);border-radius:12px;padding:12px;background:#1a2030;color:var(--text);text-align:left;cursor:pointer;transition:.15s;font:inherit}.event:hover{border-color:#b35d95;transform:translateY(-1px);background:#262238}.event b{display:block;font-size:14px}.event span{color:var(--muted);font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}.stat{background:#101521;border:1px solid var(--line);border-radius:12px;padding:11px}.stat small{display:block;color:var(--muted);font-size:11px}.stat strong{font-size:23px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding:11px 0}.row:first-of-type{border-top:0}.row label{font-size:13px}.row select,.row input{background:#0e1320;border:1px solid #343d53;border-radius:8px;color:var(--text);padding:8px;max-width:58%}
+.log{height:220px;overflow:auto;display:flex;flex-direction:column;gap:7px}.entry{border-left:2px solid var(--cyan);padding:7px 9px;background:#101521;border-radius:0 8px 8px 0;font-size:12px}.entry strong{color:#f6c3db}.entry time{color:var(--muted);float:right}.empty{color:var(--muted);text-align:center;padding:45px 0;font-size:13px}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.smallbtn{border:1px solid var(--line);background:#1b2232;color:var(--text);padding:8px 12px;border-radius:9px;cursor:pointer}.smallbtn.primary{background:#e74f96;border-color:#e74f96;color:#1a0b16;font-weight:800}
+.notice{margin-top:16px;border:1px solid #65512b;background:#211c12;color:#e9d7aa;border-radius:13px;padding:12px 14px;font-size:12px}.foot{color:#77829b;font-size:11px;margin-top:14px}
+@media(max-width:760px){main{padding:18px 12px 30px}.top{display:block}.pill{display:inline-block;margin-top:12px}.grid{grid-template-columns:1fr}.panel{padding:14px}.stage{min-height:225px}}
+</style>
+</head>
+<body><main>
+<header class="top"><div><div class="eyebrow">LOLI DESKTOP PET / LIVE LAB</div><div class="title">直播互动控制台</div><div class="sub">先把互动手感调好，再接真实直播事件。点按下方模拟礼物、点赞、关注与弹幕，查看角色动作、感谢语和事件队列。</div></div><div class="pill">● 本地模拟模式 · 未连接抖音</div></header>
+<div class="grid">
+<section class="panel"><h2>角色预览</h2><div class="hint">此页面是交互原型，不会控制手机上的真实桌宠</div>
+<div class="stage"><div class="status" id="status">待机中</div><div class="orb" id="pet">🐱</div><div class="bubble" id="bubble">直播间准备就绪，等你送来第一份惊喜。</div></div>
+<div class="buttons">
+<button class="event" data-type="like"><b>♡ 点赞 × 10</b><span>开心挥手 · 低优先级</span></button>
+<button class="event" data-type="follow"><b>＋ 新关注</b><span>鞠躬欢迎 · 中优先级</span></button>
+<button class="event" data-type="gift"><b>🎁 普通礼物</b><span>比心感谢 · 中优先级</span></button>
+<button class="event" data-type="combo"><b>✨ 连续送礼 × 5</b><span>连击特效 · 合并播报</span></button>
+<button class="event" data-type="biggift"><b>👑 高价值礼物</b><span>专属庆祝 · 高优先级</span></button>
+<button class="event" data-type="comment"><b>💬 弹幕点名</b><span>昵称回应 · 低优先级</span></button>
+</div></section>
+<section class="panel"><h2>互动规则</h2><div class="hint">原型配置即时生效；刷新后恢复默认</div>
+<div class="stats"><div class="stat"><small>已触发事件</small><strong id="total">0</strong></div><div class="stat"><small>礼物价值点</small><strong id="points">0</strong></div><div class="stat"><small>队列状态</small><strong id="queue">空闲</strong></div></div>
+<div class="row"><label for="nickname">观众昵称（模拟）</label><input id="nickname" value="星星同学" maxlength="16"></div>
+<div class="row"><label for="voice">感谢语风格</label><select id="voice"><option value="cute">可爱俏皮</option><option value="calm">温柔自然</option><option value="funny">轻松搞笑</option></select></div>
+<div class="row"><label for="volume">音效音量</label><input id="volume" type="range" min="0" max="100" value="55"></div>
+<div class="row"><label for="merge">合并连续礼物播报</label><input id="merge" type="checkbox" checked></div>
+<div class="row"><label for="mute">静音（只显示字幕）</label><input id="mute" type="checkbox"></div>
+<div class="actions"><button class="smallbtn primary" id="test">播放感谢测试</button><button class="smallbtn" id="clear">清空事件记录</button></div>
+</section>
+<section class="panel" style="grid-column:1/-1"><h2>实时事件记录</h2><div class="hint">仅记录本页面的模拟数据；没有读取抖音账号、直播间或真实礼物。</div><div class="log" id="log"><div class="empty" id="empty">还没有事件。点一份礼物，让桌宠热闹起来。</div></div><div class="foot">下一阶段：将统一事件格式接到获准的直播事件来源，再映射到 Android PetService 的动作与气泡。模拟数据绝不会伪装成真实直播数据。</div></section>
+</div>
+<div class="notice"><b>接入边界：</b>当前版本只验证互动规则与视觉反馈。真实抖音礼物、关注、评论事件需要官方开放能力或获得授权的接入方式；本原型不抓取直播间、不读取账号凭据，也不绕过平台限制。</div>
+</main>
+<script>
+(()=> {
+ const $=id=>document.getElementById(id), pet=$('pet'), bubble=$('bubble'), status=$('status'), log=$('log');
+ let total=0,points=0,queueTimer;
+ const copy={
+ like:['挥挥小手！看到你啦～','大家的点赞我都收到啦！','人气正在升温，开心转圈！'],
+ follow:['欢迎新朋友！坐下慢慢玩～','新朋友来啦，给你一个大大的欢迎！'],
+ gift:['谢谢你的礼物，心意收到啦！','这份惊喜我会好好珍藏～','给你比一个大大的心！'],
+ combo:['连击收到！幸福值正在叠加！','礼物连成串，开心也翻倍！'],
+ biggift:['哇！这份惊喜也太闪耀了吧！','高能礼物降临，启动庆祝模式！'],
+ comment:['{name}，我看到你啦！','{name}，这条弹幕被我捕捉到了！']
+ };
+ const motions={like:['开心挥手','pop'],follow:['鞠躬欢迎','heart'],gift:['比心感谢','heart'],combo:['连续庆祝','shake'],biggift:['专属庆祝','pop'],comment:['昵称回应','heart'],test:['感谢测试','heart']};
+ function phrase(type){let arr=copy[type]||copy.gift;let s=arr[Math.floor(Math.random()*arr.length)];return s.replace('{name}',($('nickname').value.trim()||'朋友').slice(0,16))}
+ function eventName(type){return ({like:'点赞',follow:'关注',gift:'普通礼物',combo:'连续礼物',biggift:'高价值礼物',comment:'弹幕点名',test:'测试播报'})[type]||type}
+ function trigger(type,detail){
+   total++; if(type==='gift')points+=1;if(type==='combo')points+=5;if(type==='biggift')points+=20;
+   $('total').textContent=total;$('points').textContent=points;$('queue').textContent='播放中';status.textContent=motions[type]?.[0]||'互动中';
+   pet.classList.remove('pop','shake','heart');void pet.offsetWidth;pet.classList.add(motions[type]?.[1]||'pop');
+   const msg=detail||phrase(type);bubble.textContent=$('mute').checked?'🔇 字幕：'+msg:msg;
+   const d=document.createElement('div');d.className='entry';const t=document.createElement('time');t.textContent=new Date().toLocaleTimeString('zh-CN',{hour12:false});
+   const b=document.createElement('strong');b.textContent=eventName(type)+' · ';d.append(b,document.createTextNode(msg),t);log.prepend(d);$('empty')?.remove();
+   clearTimeout(queueTimer);queueTimer=setTimeout(()=>{$('queue').textContent='空闲';status.textContent='待机中'},1300);
+   if(!$('mute').checked&&Number($('volume').value)>0&&'speechSynthesis'in window){
+     // 可选浏览器语音，仅用于原型演示，不代表已接入桌宠语音引擎。
+     if(type==='biggift'||type==='gift'||type==='follow'||type==='test'){
+       try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(msg);u.lang='zh-CN';u.rate=$('voice').value==='funny'?1.12:.96;u.volume=Number($('volume').value)/100;speechSynthesis.speak(u)}catch(e){}
+     }
+   }
+ }
+ document.querySelectorAll('[data-type]').forEach(btn=>btn.addEventListener('click',()=>{
+   let type=btn.dataset.type;
+   if(type==='combo'&&$('merge').checked)trigger(type,'连续礼物 × 5，感谢大家的支持！');else trigger(type);
+ }));
+ $('test').addEventListener('click',()=>trigger('test',phrase('gift')));
+ $('clear').addEventListener('click',()=>{log.innerHTML='<div class="empty" id="empty">记录已清空，继续点按事件测试。</div>';total=0;points=0;$('total').textContent='0';$('points').textContent='0';$('queue').textContent='空闲';if('speechSynthesis'in window)speechSynthesis.cancel()});
+})();
+</script></body></html>

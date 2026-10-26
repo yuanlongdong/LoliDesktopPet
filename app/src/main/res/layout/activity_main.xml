@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 大肥鱼桌宠 · 设置页
-     背景是鲸鱼娘自拍（压暗当水印），内容用圆角卡片分层，主按钮用 DeepSeek 蓝渐变。 -->
+     原项目的鲸鱼娘 PNG 属于未随源码分发的可选素材；没有原图时保持留空，不用替代图。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_app">
 
-    <!-- 背景自拍水印（压得很低，只做气氛，不挡字） -->
+    <!-- 可选背景立绘；原图未随源码分发时保持透明留空。 -->
     <ImageView
         android:id="@+id/bgSelfie"
         android:layout_width="380dp"
@@ -17,7 +17,7 @@
         android:alpha="0.20"
         android:contentDescription="@null"
         android:scaleType="fitEnd"
-        android:src="@drawable/whale_selfie" />
+        android:src="@null" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -46,7 +46,7 @@
                     android:layout_height="56dp"
                     android:contentDescription="@null"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/whale_cutout" />
+                    android:src="@null" />
 
                 <LinearLayout
                     android:layout_width="0dp"

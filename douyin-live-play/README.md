@@ -1,0 +1,96 @@
+# 桌宠抖音直播小玩法客户端（独立开发路径）
+
+这个目录是把桌宠改造成**抖音官方直播小玩法**的独立客户端路径，不会改动现有 Android 悬浮桌宠 APK。它围绕官方「直播玩法 + 抖音云 + Unity SDK」的互动链路开发，目标是在抖音手机开播时，由真实的点赞、评论指令和礼物事件驱动角色动画。
+
+## 先讲清楚产品边界
+
+这不是把普通 Android App 接到直播间数据上。抖音官方说明，直播玩法必须本身具备直播互动玩法内容；普通应用/编辑器不能借直播玩法获取数据后自行应用。手机开播要求通过官方云启动能力运行经审核的玩法。
+
+官方文档：
+- [直播玩法简介与产品形态](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/introduction/live-play/1)
+- [直播玩法创建与开放能力申请](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/introduction/zn/toybox-start)
+- [抖音云互动事件接入](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/develop/douyincloud/guide)
+- [Unity SDK 接入](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/develop/unity-sdk/unity-sdk-access)
+- [手机端适配要求](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/develop/unity-sdk/cloud-sync/mobile-live-integration)
+
+## 本次新增的代码
+
+- `Assets/Scripts/PetLiveReactionController.cs`：标准化事件队列、去重、频率控制、角色 Animator 触发、台词气泡、安全的评论指令白名单，以及“观众合力给桌宠充能”的循环玩法。
+- `Assets/Scripts/DouyinCloudMessageAdapter.cs`：接收 SDK 示例 `SampleDyCloudManager.OnDyCloudMessage`，解析官方云消息数组，处理真实事件并上报消息 ACK。
+- `Assets/Scripts/DouyinLivePlayBootstrap.cs`：初始化官方 SDK 示例管理器，直接等待官方抖音云 API 初始化完成；调用云函数时核验 HTTP 状态与 `err_no`；通过官方示例管理器连接 `/websocket_callback`，并核验云函数 HTTP 状态和返回码；由于当前样例封装没有暴露经本项目验证的连接状态，调用返回不等于真实 WebSocket 已连通，必须以 SDK 日志和真实事件验收为准；退出时调用 `/finish_game` 并关闭连接。
+- `cloud/start_game.ts`：按当前直播上下文开启点赞、评论、礼物三个推送任务。
+- `cloud/finish_game.ts`：一局结束时停止这三个任务，避免游戏结束后继续消费事件。
+- `cloud/live_data_callback.ts`：接收抖音云内网回调，并按每条指令独立推送到官方 WebSocket 网关，保留各自 `msg_id`，供客户端完成动作后逐条上报履约。
+- `cloud/websocket_callback.ts`：记录客户端连接状态，不记录观众评论内容。
+
+云端逻辑测试可在 `douyin-live-play/` 下运行 `npm install` 后执行 `npm run test:cloud`。测试覆盖云函数 TypeScript 类型检查、启动与回滚、按消息 ID 独立推送、网关失败处理、缺少必要请求头，以及结束任务；测试使用隔离的 SDK mock，不代表真实抖音平台联调成功。
+
+这些是已写入仓库的源码，**不是已部署的云服务，也不是已通过抖音审核的产品**。Bootstrap 是接线骨架，仍需在安装了正确版本官方 Unity SDK 和 Samples 的实际项目中编译、联调。我没有你的抖音开放平台 AppID、抖音云 EnvID/ServiceID 或已审批的互动数据能力，所以目前不能宣称收到真实直播事件或已完成手机端开播联调。
+
+## 玩法准入风险
+
+这批代码只是**真实事件到角色动作的接入组件**，不等于已经满足抖音直播玩法准入要求的完整成品。官方规则要求玩法本身具备互动内容和明确指令效果，并要求核心角色/场景有足够的美术质量；不能只把互动数据变成文字展示。提案需包含玩法说明与演示视频，是否准入以平台审核结果为准。
+
+因此，提交前还应为角色设计清晰的互动循环，例如主播选择一项挑战，观众用白名单评论指令或已配置礼物触发不同动作/进度，并在画面中以真实动画呈现结果。不能把“连接了三个事件接口”当作玩法完成。
+
+官方准入规则：[直播玩法准入规则](https://developer.open-douyin.com/docs/resource/zh-CN/interaction/introduction/live-play/creation)。
+
+## 运行前置条件
+
+1. 在抖音开放平台创建「直播小玩法」，选择「弹幕玩法」类型并提交玩法提案。平台通过提案后才能申请对应开放能力。个人开发者也可按官方规则申请。
+2. 申请并配置评论、点赞、礼物互动数据能力，以及用于手机开播的云启动能力。
+3. 按官方文档建立抖音云服务，把 `cloud/start_game.ts`、`cloud/live_data_callback.ts`、`cloud/websocket_callback.ts` 分别配置为对应路径。
+4. 在 Unity 2022.3 LTS 项目中安装抖音官方 BGDT 与 LiveOpenSDK。官方 SDK 示例目录包含 `SampleDyCloudManager.cs`；将 SDK 的 Samples 复制到项目的 `Assets` 下，避免直接修改 Packages 内的文件。
+5. 在玩法启动代码中初始化 LiveOpenSDK，设置真实 `AppId`，初始化 `SampleDyCloudManager` 的 `EnvId` / `ServiceId` 后连接抖音云，并调用本目录 `DouyinCloudMessageAdapter.Bind(manager)`。
+6. 在 Unity 场景中挂载 `PetLiveReactionController`，绑定角色 Animator 与可选的气泡 UI。Animator 需要配置以下 Trigger 名称：`Like`、`Comment`、`Gift`、`BigGift`、`Dance`、`Heart`、`Wave`、`Hug`、`Cheer`。将可选的 Slider 与 Text 绑定到能量进度 UI；每轮达到目标后会触发 `Cheer` 并重置进度。按实际角色动画命名可修改映射。
+7. 在抖音云 dev 环境完成联调，再按平台要求发布到正式环境和提审。不要把 App Secret、访问令牌或云端私钥提交到 Git。
+
+## 事件履约与失败处理
+
+- 客户端只在角色反应实际可见后调用 SDK 的 `MessageAckService.ReportAck`：已触发存在的 Animator Trigger、可见的文字气泡或可见的能量 UI 三者至少满足一项。仅进入队列、触发器缺失且没有可见 UI 时不会伪报履约。
+- 云端每条指令单独推送，保留平台的 `msg_id`，用于将履约回报对应到具体事件。
+- 启动任务时若点赞、评论、礼物中有任一项失败，会尝试停止已经成功启动的任务，避免半启动状态持续收数。
+- 这些逻辑仍需在真实 SDK 和抖音云 dev 环境联调，当前仓库代码本身不能证明平台已成功收到履约回报。
+
+## 可玩的互动循环
+
+这版不只把事件换成气泡文字，还加入了一个可重复的合作目标：**观众一起给桌宠充能，充满后触发庆祝动作并开启下一轮**。
+
+- 点赞：小幅增加能量，合并点赞数量会受到单次上限控制。
+- 评论指令：发送“跳舞 / 比心 / 挥手 / 抱抱”，触发对应动作并获得不同能量。
+- 礼物：按礼物数量增加能量。
+- 达到目标：触发 `Cheer`，显示完成提示并将能量归零进入下一轮。
+- 可在 Unity Inspector 中调整能量目标、单次增量上限、响应间隔；进度条与数字标签是可选 UI。
+
+这是已经写入源码的玩法逻辑，尚未在 Unity 场景中绑定真实角色动画和 UI。没有配置对应 Animator Trigger 时，控制器会输出警告，不会凭空生成角色动画。
+
+## 事件表现
+
+| 真实事件 | 角色反馈 |
+|---|---|
+| 点赞 | 触发 `Like`，显示致谢气泡 |
+| 评论 | 默认触发 `Comment`；命中“跳舞 / 比心 / 挥手 / 抱抱”白名单指令时触发相应动作。不会把任意弹幕原文直接显示到画面上 |
+| 礼物 | 触发 `Gift`，数量达到 10 或以上时触发 `BigGift` |
+
+
+评论指令只决定已配置动作，不实现抽奖或随机付费效果。礼物触发规则需在直播玩法提案和平台运营配置中保持一致。
+
+## 角色素材说明
+
+当前 Android 桌宠的动画 WebP 是运行时下载并构建的上游素材，仓库没有提交这些二进制动画；上游素材的授权注明禁止商用。这个 Unity 子项目没有擅自复制它们，也没有用临时几何图冒充你的角色。接入抖音玩法前，需要把你有权使用的角色动画制作/导入为 Unity Animator 动画片段，再把片段挂到上述 Trigger 上。
+
+## 当前验收状态
+
+- [x] 写入客户端事件消费与反应映射代码
+- [x] 写入抖音云四个函数源码（启动、回调、WebSocket 生命周期、结束）
+- [x] 增加云函数可重复的本地测试（逻辑与类型检查）
+- [x] 启动器检查云函数 HTTP 状态和返回码
+- [x] 新增 Unity 项目骨架、SDK 安装步骤和云函数部署映射
+- [ ] 在已安装官方 SDK 的 Unity Editor 中实际编译（当前无法在仓库自动完成，SDK 通过 BGDT/权限分发）
+- [ ] 安装官方 SDK 与真实 AppID
+- [ ] 配置并部署抖音云 dev 环境
+- [ ] 提案通过并开通直播互动数据权限
+- [ ] 在真实手机直播间验证点赞、评论、礼物触发
+- [ ] 完成角色美术/动画资产接入
+
+在全部未完成验收项完成前，不得把当前版本称为端到端已接通。

@@ -1,0 +1,73 @@
+import { dySDK } from "@open-dy/node-server-sdk";
+
+type ApiResult = {
+  err_no?: number;
+  err_msg?: string;
+  data?: unknown;
+};
+
+const MESSAGE_TYPES = ["live_comment", "live_like", "live_gift"];
+
+export default async function (_params: unknown, context: any) {
+  const serviceContext = dySDK.context(context);
+  const liveContext = serviceContext.getContext();
+  const appId = liveContext?.appId;
+  const roomId = liveContext?.roomId;
+
+  if (!appId || !roomId) {
+    context.error("start_game missing Douyin live context");
+    return { err_no: 1, err_msg: "缺少抖音直播间上下文，无法开启互动推送" };
+  }
+
+  const results: Record<string, { ok: boolean; err_no?: number; err_msg?: string }> = {};
+  const startedTypes: string[] = [];
+
+  for (const msgType of MESSAGE_TYPES) {
+    try {
+      const result = (await serviceContext.openApiInvoke({
+        url: "https://webcast-bytedance-com.openapi.dyc.ivolces.com/api/live_data/task/start",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        data: { roomid: roomId, appid: appId, msg_type: msgType }
+      })) as ApiResult;
+
+      const ok = result?.err_no === 0;
+      results[msgType] = { ok, err_no: result?.err_no, err_msg: result?.err_msg };
+      if (ok) {
+        startedTypes.push(msgType);
+      } else {
+        context.error("Failed to start live data task", msgType, result?.err_msg);
+      }
+    } catch (error) {
+      results[msgType] = { ok: false, err_msg: String(error) };
+      context.error("Failed to start live data task", msgType, error);
+    }
+  }
+
+  const allStarted = MESSAGE_TYPES.every((type) => results[type]?.ok);
+  if (!allStarted) {
+    // Roll back any tasks that did start, so a partial startup cannot leave
+    // live data flowing after the client believes the round failed.
+    for (const msgType of startedTypes) {
+      try {
+        const stopped = (await serviceContext.openApiInvoke({
+          url: "https://webcast-bytedance-com.openapi.dyc.ivolces.com/api/live_data/task/stop",
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          data: { roomid: roomId, appid: appId, msg_type: msgType }
+        })) as ApiResult;
+        if (stopped?.err_no !== 0) {
+          context.error("Rollback failed to stop live data task", msgType, stopped?.err_msg);
+        }
+      } catch (error) {
+        context.error("Rollback failed to stop live data task", msgType, error);
+      }
+    }
+  }
+
+  return {
+    err_no: allStarted ? 0 : 1,
+    err_msg: allStarted ? "互动事件订阅已启动" : "部分互动事件启动失败，已尝试回滚已启动任务，请检查抖音云日志",
+    data: results
+  };
+}

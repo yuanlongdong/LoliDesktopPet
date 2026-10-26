@@ -1,0 +1,23 @@
+{
+  "description": "桌宠抖音直播互动插件",
+  "packOptions": {
+    "ignore": []
+  },
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "postcss": true,
+    "preloadBackgroundData": false,
+    "minified": true,
+    "newFeature": true,
+    "autoAudits": false,
+    "compileHotReLoad": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true
+  },
+  "compileType": "miniprogram",
+  "appid": "",
+  "projectname": "LoliDesktopPet-Douyin-Live-Plugin",
+  "miniprogramRoot": "./",
+  "condition": {}
+}

@@ -1,0 +1,35 @@
+name: Douyin live-play cloud tests
+
+on:
+  push:
+    branches:
+      - feature/douyin-live-interaction
+    paths:
+      - "douyin-live-play/cloud/**"
+      - "douyin-live-play/tests/**"
+      - "douyin-live-play/package.json"
+      - ".github/workflows/douyin-live-play-cloud-tests.yml"
+  pull_request:
+    paths:
+      - "douyin-live-play/cloud/**"
+      - "douyin-live-play/tests/**"
+      - "douyin-live-play/package.json"
+      - ".github/workflows/douyin-live-play-cloud-tests.yml"
+
+jobs:
+  cloud-functions:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: douyin-live-play
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test dependencies
+        run: npm install
+      - name: Run isolated cloud function tests
+        run: npm run test:cloud
