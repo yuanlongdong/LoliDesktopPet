@@ -77,6 +77,13 @@ namespace LoliDesktopPet.DouyinLivePlay
         [SerializeField] private Text bubbleText;
         [SerializeField, Min(0.1f)] private float bubbleDurationSeconds = 2.8f;
 
+        [Header("Co-op mini-game: charge the pet's energy")]
+        [SerializeField] private Slider energySlider;
+        [SerializeField] private Text energyText;
+        [SerializeField, Min(10)] private int energyGoal = 100;
+        [SerializeField, Min(1)] private int maxEnergyPerEvent = 20;
+        private int currentEnergy;
+
         [Header("Rate control")]
         [SerializeField, Min(0f)] private float minimumReactionGapSeconds = 0.45f;
         [SerializeField, Min(1)] private int queueCapacity = 64;
@@ -104,6 +111,7 @@ namespace LoliDesktopPet.DouyinLivePlay
 
             if (bubbleText != null) bubbleText.supportRichText = false;
             HideBubble();
+            UpdateEnergyUI();
         }
 
         /// <summary>
@@ -192,8 +200,61 @@ namespace LoliDesktopPet.DouyinLivePlay
                     break;
             }
 
+            int energyGain = EnergyForEvent(e, trigger);
+            currentEnergy += energyGain;
+            int goal = Mathf.Max(10, energyGoal);
+            if (currentEnergy >= goal)
+            {
+                currentEnergy = 0;
+                line = "大家合力把桌宠能量充满了！再来一轮！";
+                FireTrigger("Cheer");
+            }
+
+            UpdateEnergyUI();
             FireTrigger(trigger);
             ShowBubble(line);
+        }
+
+        private int EnergyForEvent(PetLiveEvent e, string trigger)
+        {
+            int count = Mathf.Clamp(e.Count, 1, 20);
+            int gain;
+            switch (e.Type)
+            {
+                case "live_like":
+                    gain = Mathf.CeilToInt(count * 0.5f);
+                    break;
+                case "live_gift":
+                    gain = count * 3;
+                    break;
+                case "live_comment":
+                    switch (trigger)
+                    {
+                        case "Dance": gain = 12; break;
+                        case "Heart": gain = 8; break;
+                        case "Wave": gain = 6; break;
+                        case "Hug": gain = 10; break;
+                        default: gain = 2; break;
+                    }
+                    break;
+                default:
+                    gain = 0;
+                    break;
+            }
+            return Mathf.Clamp(gain, 1, Mathf.Max(1, maxEnergyPerEvent));
+        }
+
+        private void UpdateEnergyUI()
+        {
+            int goal = Mathf.Max(10, energyGoal);
+            if (energySlider != null)
+            {
+                energySlider.minValue = 0;
+                energySlider.maxValue = goal;
+                energySlider.value = currentEnergy;
+            }
+            if (energyText != null)
+                energyText.text = "桌宠能量 " + currentEnergy + " / " + goal;
         }
 
         private static string CommentCommandTrigger(string comment)
