@@ -1,0 +1,2 @@
+m_EditorVersion: 2022.3.62f1
+m_EditorVersionWithRevision: 2022.3.62f1 (verified scaffold target; editor revision is resolved by local Unity installation)
