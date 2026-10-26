@@ -490,6 +490,130 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
+            <!-- 直播联动：抖音直播间事件 → 桌宠反应（默认关闭，不联网） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_card"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="14dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/live_title"
+                        android:textColor="@color/text"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/btnLive"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_chip_off"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingStart="18dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="18dp"
+                        android:paddingBottom="6dp"
+                        android:text="@string/live_off"
+                        android:textColor="@color/chip_off_text"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/live_hint"
+                    android:textColor="@color/text_dim"
+                    android:textSize="11sp" />
+
+                <!-- 桥地址 + 端口 -->
+                <LinearLayout
+                    android:id="@+id/liveBridgeRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/inputLiveHost"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_input"
+                        android:hint="@string/live_host_label"
+                        android:inputType="text"
+                        android:singleLine="true"
+                        android:textColor="@color/text"
+                        android:textColorHint="@color/text_dim"
+                        android:textSize="13sp" />
+
+                    <EditText
+                        android:id="@+id/inputLivePort"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="0.45"
+                        android:background="@drawable/bg_input"
+                        android:hint="@string/live_port_label"
+                        android:inputType="number"
+                        android:singleLine="true"
+                        android:textColor="@color/text"
+                        android:textColorHint="@color/text_dim"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/live_host_hint"
+                    android:textColor="@color/text_dim"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/btnLiveTest"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_btn_ghost"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="@string/live_btn_test"
+                    android:textColor="@color/accent_light"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/liveStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/text_dim"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/live_bridge_howto"
+                    android:textColor="@color/text_dim"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
             <!-- 台词库：用户可以自己改 -->
             <LinearLayout
                 android:layout_width="match_parent"
