@@ -17,7 +17,7 @@
 
 - `Assets/Scripts/PetLiveReactionController.cs`：标准化事件队列、去重、频率控制、角色 Animator 触发、台词气泡、安全的评论指令白名单，以及“观众合力给桌宠充能”的循环玩法。
 - `Assets/Scripts/DouyinCloudMessageAdapter.cs`：接收 SDK 示例 `SampleDyCloudManager.OnDyCloudMessage`，解析官方云消息数组，处理真实事件并上报消息 ACK。
-- `Assets/Scripts/DouyinLivePlayBootstrap.cs`：初始化官方 SDK 示例管理器，直接等待官方抖音云 API 初始化完成；调用云函数时核验 HTTP 状态与 `err_no`；连接 `/websocket_callback` 后等待真实 SDK `OnOpen` 事件，超时或终态错误会触发失败清理；退出时调用 `/finish_game` 并关闭连接。
+- `Assets/Scripts/DouyinLivePlayBootstrap.cs`：初始化官方 SDK 示例管理器，直接等待官方抖音云 API 初始化完成；调用云函数时核验 HTTP 状态与 `err_no`；通过官方示例管理器连接 `/websocket_callback`，并核验云函数 HTTP 状态和返回码；由于当前样例封装没有暴露经本项目验证的连接状态，调用返回不等于真实 WebSocket 已连通，必须以 SDK 日志和真实事件验收为准；退出时调用 `/finish_game` 并关闭连接。
 - `cloud/start_game.ts`：按当前直播上下文开启点赞、评论、礼物三个推送任务。
 - `cloud/finish_game.ts`：一局结束时停止这三个任务，避免游戏结束后继续消费事件。
 - `cloud/live_data_callback.ts`：接收抖音云内网回调，并按每条指令独立推送到官方 WebSocket 网关，保留各自 `msg_id`，供客户端完成动作后逐条上报履约。
@@ -84,7 +84,9 @@
 - [x] 写入客户端事件消费与反应映射代码
 - [x] 写入抖音云四个函数源码（启动、回调、WebSocket 生命周期、结束）
 - [x] 增加云函数可重复的本地测试（逻辑与类型检查）
-- [x] 启动器检查云函数 HTTP 状态并等待 WebSocket `OnOpen`
+- [x] 启动器检查云函数 HTTP 状态和返回码
+- [x] 新增 Unity 项目骨架、SDK 安装步骤和云函数部署映射
+- [ ] 在已安装官方 SDK 的 Unity Editor 中实际编译（当前无法在仓库自动完成，SDK 通过 BGDT/权限分发）
 - [ ] 安装官方 SDK 与真实 AppID
 - [ ] 配置并部署抖音云 dev 环境
 - [ ] 提案通过并开通直播互动数据权限
