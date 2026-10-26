@@ -44,7 +44,6 @@ namespace LoliDesktopPet.DouyinLivePlay
             if (type == "live_like" || type == "like") return "live_like";
             if (type == "live_comment" || type == "comment") return "live_comment";
             if (type == "live_gift" || type == "gift") return "live_gift";
-            if (type == "live_follow" || type == "follow") return "live_follow";
             return string.Empty;
         }
 
