@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using ByteDance.LiveOpenSdk.Utilities;
 using Douyin.LiveOpenSDK.Samples;
 using UnityEngine;
 
@@ -27,6 +26,7 @@ namespace LoliDesktopPet.DouyinLivePlay
         private SampleDyCloudManager cloudManager;
         private bool started;
         private bool cleaningUp;
+        private bool startRequested;
 
         [Serializable]
         private sealed class CloudFunctionResponse
@@ -69,7 +69,8 @@ namespace LoliDesktopPet.DouyinLivePlay
 
                 await cloudManager.Init();
 
-                string startResult = await cloudManager.CallContainer("/start_game", HttpType.POST);
+                startRequested = true;
+                string startResult = await cloudManager.CallContainer("/start_game", "POST");
                 CloudFunctionResponse parsed = JsonUtility.FromJson<CloudFunctionResponse>(startResult);
                 if (parsed == null || parsed.err_no != 0)
                 {
@@ -77,33 +78,32 @@ namespace LoliDesktopPet.DouyinLivePlay
                     throw new InvalidOperationException("Douyin Cloud /start_game failed: " + detail);
                 }
 
-                await cloudManager.ConnectWebSocket();
                 started = true;
+                await cloudManager.ConnectWebSocket();
                 Debug.Log("[DouyinLiveBootstrap] Start request accepted. Check SDK logs and the real Douyin live room before treating the connection as verified.");
             }
             catch (Exception ex)
             {
                 Debug.LogError("[DouyinLiveBootstrap] Startup failed: " + ex.Message);
-                if (messageAdapter != null) messageAdapter.Unbind();
+                await CleanupAsync(startRequested || started);
             }
         }
 
-        private async void OnDestroy()
+        private async Task CleanupAsync(bool stopTasks)
         {
             if (cleaningUp) return;
             cleaningUp = true;
-
             if (messageAdapter != null) messageAdapter.Unbind();
 
             try
             {
                 if (cloudManager != null)
                 {
-                    if (started)
+                    if (stopTasks)
                     {
                         try
                         {
-                            string result = await cloudManager.CallContainer("/finish_game", HttpType.POST);
+                            string result = await cloudManager.CallContainer("/finish_game", "POST");
                             Debug.Log("[DouyinLiveBootstrap] /finish_game result: " + result);
                         }
                         catch (Exception ex)
@@ -125,6 +125,11 @@ namespace LoliDesktopPet.DouyinLivePlay
                 sdkManager = null;
                 cloudManager = null;
             }
+        }
+
+        private async void OnDestroy()
+        {
+            await CleanupAsync(started || startRequested);
         }
     }
 }
