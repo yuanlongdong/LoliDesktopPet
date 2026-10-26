@@ -41,16 +41,26 @@ jobs:
       - name: Install Android SDK components
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
+      - name: Cache pet animation assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/src/main/assets/webp
+            anim-map.json
+            app/src/main/assets/pet-config.json
+          key: ${{ runner.os }}-pet-webp-0.3.8-${{ hashFiles('tools/build-assets.mjs', 'tools/gen-config.mjs') }}
+
       - name: Restore animation assets
         run: |
-          chmod +x tools/fetch-and-transcode.sh
+          chmod +x tools/fetch-and-transcode.sh gradlew
           ./tools/fetch-and-transcode.sh
 
       - name: Build debug APK
         run: |
           SDK_PATH="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
           echo "sdk.dir=$SDK_PATH" > local.properties
-          bash ./gradlew :app:assembleDebug --no-daemon
+          chmod +x ./gradlew
+          ./gradlew :app:assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
