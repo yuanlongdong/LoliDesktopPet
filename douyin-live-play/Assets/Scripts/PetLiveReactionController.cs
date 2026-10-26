@@ -203,15 +203,16 @@ namespace LoliDesktopPet.DouyinLivePlay
             int energyGain = EnergyForEvent(e, trigger);
             currentEnergy += energyGain;
             int goal = Mathf.Max(10, energyGoal);
-            if (currentEnergy >= goal)
+            bool roundCompleted = currentEnergy >= goal;
+            if (roundCompleted)
             {
                 currentEnergy = 0;
                 line = "大家合力把桌宠能量充满了！再来一轮！";
-                FireTrigger("Cheer");
             }
 
             UpdateEnergyUI();
             FireTrigger(trigger);
+            if (roundCompleted) FireTrigger("Cheer");
             ShowBubble(line);
         }
 
