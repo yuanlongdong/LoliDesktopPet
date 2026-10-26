@@ -1,4 +1,4 @@
-name: Build LoliDesktopPet APK
+name: Build and Release LoliDesktopPet APK
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -31,10 +31,21 @@ jobs:
           gradle-version: '8.9'
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug --stacktrace
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: loli-desktop-pet-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+      - name: Publish APK release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0
+          name: Loli Desktop Pet v0.1.0
+          body: |
+            安卓桌宠首个可安装测试版。
+            下载下方 app-debug.apk，手机直接安装，无需解压。
+          draft: false
+          prerelease: false
+          files: app/build/outputs/apk/debug/app-debug.apk
