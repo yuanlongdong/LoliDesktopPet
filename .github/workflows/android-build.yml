@@ -42,20 +42,20 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Publish or update v0.1.1 GitHub Release
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/feature/douyin-live-interaction' || github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feature/douyin-live-interaction') && github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push' && github.ref == 'refs/heads/feature/douyin-live-interaction'
+      - name: Publish or update v0.1.2 GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/douyin-live-interaction' && contains(github.event.head_commit.message, 'Publish v0.1.2 release')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          if gh release view v0.1.1 --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
-            gh release upload v0.1.1 app/build/outputs/apk/debug/*.apk --repo "${GITHUB_REPOSITORY}" --clobber
-            gh release edit v0.1.1 --repo "${GITHUB_REPOSITORY}" --title "Loli Desktop Pet v0.1.1" --notes "Android debug build. Includes live-interaction event bridge and fixes for missing drawable and sound resources. Real Douyin live event ingestion is not connected; official platform authorization is still required."
+          NOTES="Android debug APK v0.1.2 (app version 1.8.2). Fixes invisible pet behavior by drawing a bundled vector fallback when animated WebP assets are absent. This fallback keeps the pet visible and touchable; full character animation still requires the original WebP animation pack. Real Douyin event ingestion is not connected."
+          if gh release view v0.1.2 --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload v0.1.2 app/build/outputs/apk/debug/*.apk --repo "${GITHUB_REPOSITORY}" --clobber
+            gh release edit v0.1.2 --repo "${GITHUB_REPOSITORY}" --title "Loli Desktop Pet v0.1.2" --notes "${NOTES}"
           else
-            gh release create v0.1.1 app/build/outputs/apk/debug/*.apk \
+            gh release create v0.1.2 app/build/outputs/apk/debug/*.apk \
               --repo "${GITHUB_REPOSITORY}" \
-              --target "${RELEASE_TARGET_SHA}" \
-              --title "Loli Desktop Pet v0.1.1" \
-              --notes "Android debug build. Includes live-interaction event bridge and fixes for missing drawable and sound resources. Real Douyin live event ingestion is not connected; official platform authorization is still required." \
+              --target "${GITHUB_SHA}" \
+              --title "Loli Desktop Pet v0.1.2" \
+              --notes "${NOTES}" \
               --latest
           fi
