@@ -53,6 +53,26 @@ python3 bridge.py --port 17632 --file events.txt
 电脑防火墙要放行 `17632` 端口。查电脑局域网 IP（例如 Windows `ipconfig`，
 `192.168.x.x`），填进 App 设置页的「桥地址」，打开「直播联动」即可。
 
+## 通过 DyHub 接入真实直播事件（可选）
+
+本仓库提供了一个标准库适配器 `dyhub_sse_adapter.py`，把兼容 DyHub 的 SSE 事件流转换成桌宠桥需要的 JSON-lines 格式。它**不是采集器**；电脑上必须先运行并连接好数据源。
+
+1. 按 [DyHub 项目说明](https://github.com/ymstar/dyhub) 在电脑上部署并连接目标直播间。
+2. 在电脑终端运行以下命令（默认 DyHub SSE 地址为本机 `8757` 端口）：
+
+   ```bash
+   cd tools/live-bridge
+   python3 dyhub_sse_adapter.py \
+     --url 'http://127.0.0.1:8757/api/events?types=chat,gift,member,like,follow' \
+     | python3 bridge.py --port 17632
+   ```
+
+3. 手机与电脑处于同一可信局域网，在桌宠设置里填电脑的局域网 IP 和端口 `17632`，打开「直播联动」。
+
+适配映射：chat → comment、gift → gift、member → enter、like → like、follow → follow。礼物事件是否能收到，取决于数据源的登录态和平台当前策略。建议先用数据源控制台确认事件确实出现，再检查手机桥接状态。
+
+**网络安全：** `bridge.py` 默认监听所有网卡且不带身份验证，只在可信局域网使用，并通过电脑防火墙限制访问；不要直接把端口暴露到公网。DyHub 是独立第三方项目，需自行审阅其使用方式、许可和平台规则。本仓库不包含其采集器或登录凭据。
+
 ## 接真实抖音直播数据
 
 桌宠只负责「收到事件 → 反应」，**不负责去抖音抓数据**。抖音直播数据的获取方式由你选：
