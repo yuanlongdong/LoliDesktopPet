@@ -17,7 +17,7 @@
         android:alpha="0.20"
         android:contentDescription="@null"
         android:scaleType="fitEnd"
-        android:src="@drawable/whale_selfie" />
+        />
 
     <ScrollView
         android:layout_width="match_parent"
