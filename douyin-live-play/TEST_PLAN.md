@@ -26,7 +26,7 @@ These cases should be exercised with a local test harness or controlled SDK test
 | Platform test payload | Test flag true | Not enqueued |
 | Queue overload | More events than capacity | Queue remains bounded; noisy likes may be dropped |
 | Energy goal | Events collectively reach configured goal | Cheer trigger and energy resets |
-| Missing Animator trigger | Trigger not configured | Warning logged; app does not crash |
+| Missing Animator trigger | Trigger not configured | Warning logged; if no bubble or visible energy UI is present, no fulfillment ACK is sent |
 | Shutdown | Stop while connected | Adapter unsubscribes, finish endpoint is attempted, socket and SDK are closed |
 
 ## 3. Cloud function checks
@@ -46,8 +46,9 @@ Only mark the integration **LIVE VERIFIED** after all of the following are true:
 2. Cloud environment/service IDs and callback routing are configured in the platform console.
 3. A real authorized live room delivers a like, comment, and gift through the official event path.
 4. Unity logs show WebSocket open, incoming message IDs/types, the corresponding animation/bubble, and successful fulfillment ACK after the reaction is applied.
-5. Repeated events, reconnects, shutdown, and task cleanup are checked.
-6. Platform console/log evidence is saved with timestamps.
+5. Verify an event is ACKed only if an Animator trigger was actually fired or a visible bubble/energy UI rendered; a queue-only receipt must not be ACKed.
+6. Repeated events, reconnects, shutdown, and task cleanup are checked.
+7. Platform console/log evidence is saved with timestamps.
 
 Until then, use status **CODE PREPARED / NOT LIVE VERIFIED**. A successful cloud-function HTTP response alone is not proof of a live WebSocket connection or real event delivery.
 
