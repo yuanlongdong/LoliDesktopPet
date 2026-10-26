@@ -18,6 +18,7 @@
 - `Assets/Scripts/PetLiveReactionController.cs`：标准化事件队列、去重、频率控制、角色 Animator 触发、台词气泡、安全的评论指令白名单。
 - `Assets/Scripts/DouyinCloudMessageAdapter.cs`：接收 SDK 示例 `SampleDyCloudManager.OnDyCloudMessage`，解析官方云消息数组，处理真实事件并上报消息 ACK。
 - `cloud/start_game.ts`：按当前直播上下文开启点赞、评论、礼物三个推送任务。
+- `cloud/finish_game.ts`：一局结束时停止这三个任务，避免游戏结束后继续消费事件。
 - `cloud/live_data_callback.ts`：接收抖音云内网回调，并将原始事件批次推送到官方 WebSocket 网关。
 - `cloud/websocket_callback.ts`：记录客户端连接状态，不记录观众评论内容。
 
