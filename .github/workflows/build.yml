@@ -50,7 +50,7 @@ jobs:
         run: |
           SDK_PATH="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
           echo "sdk.dir=$SDK_PATH" > local.properties
-          ./gradlew :app:assembleDebug --no-daemon
+          bash ./gradlew :app:assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
