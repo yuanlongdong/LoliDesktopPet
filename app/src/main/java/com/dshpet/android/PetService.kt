@@ -197,6 +197,7 @@ class PetService : Service() {
                     }
                 }
                 ACTION_LIVE_EVENT -> {
+                    if (held.isEmpty() && Prefs.running(this)) spawnAll(Prefs.sizeDp(this))
                     acceptLiveIntent(intent)
                 }
                 else -> {
