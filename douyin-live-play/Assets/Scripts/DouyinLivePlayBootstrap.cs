@@ -184,10 +184,11 @@ namespace LoliDesktopPet.DouyinLivePlay
         {
             // The SDK may reconnect automatically. Only fail immediately for a terminal error;
             // otherwise the open timeout provides the final guard.
-            if (error != null && !error.WillReconnect)
+            if (error == null || error.WillReconnect != true)
             {
+                string detail = error != null ? error.RawMessage : "unknown WebSocket error";
                 socketOpened?.TrySetException(
-                    new InvalidOperationException("Douyin Cloud WebSocket terminal error: " + error));
+                    new InvalidOperationException("Douyin Cloud WebSocket terminal error: " + detail));
             }
         }
 
