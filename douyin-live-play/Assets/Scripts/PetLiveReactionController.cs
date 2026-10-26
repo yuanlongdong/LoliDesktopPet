@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using ByteDance.LiveOpenSdk;
 
 namespace LoliDesktopPet.DouyinLivePlay
 {
@@ -148,6 +149,16 @@ namespace LoliDesktopPet.DouyinLivePlay
             if (next == null) return;
 
             ApplyReaction(next);
+            // Report fulfillment only after the reaction was actually applied to the scene.
+            // The platform uses this for end-to-end interaction latency/fulfillment metrics.
+            try
+            {
+                LiveOpenSdk.MessageAckService.ReportAck(next.EventId, next.Type);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[PetLiveReaction] Interaction ACK failed: " + ex.Message);
+            }
             nextReactionAt = Time.unscaledTime + Mathf.Max(0f, minimumReactionGapSeconds);
         }
 
