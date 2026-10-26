@@ -15,8 +15,6 @@ namespace LoliDesktopPet.DouyinLivePlay
     /// </summary>
     public sealed class DouyinLivePlayBootstrap : MonoBehaviour
     {
-        private const int WebSocketOpenTimeoutSeconds = 15;
-
         [Header("Open platform identifiers (not secrets)")]
         [SerializeField] private string appId;
         [SerializeField] private string cloudEnvId;
@@ -29,7 +27,6 @@ namespace LoliDesktopPet.DouyinLivePlay
         private SampleLiveOpenSdkManager sdkManager;
         private SampleDyCloudManager cloudManager;
         private Task startupTask;
-        private TaskCompletionSource<bool> socketOpened;
         private bool started;
         private bool cleaningUp;
         private bool startRequested;
@@ -84,17 +81,19 @@ namespace LoliDesktopPet.DouyinLivePlay
                 // Do not use SampleDyCloudManager.Init here: the SDK sample catches and logs
                 // initialization exceptions without rethrowing. Await the public SDK API directly
                 // so a failed initialization aborts this startup sequence.
-                if (LiveOpenSdk.DyCloudApi == null)
-                    throw new InvalidOperationException("LiveOpenSdk.DyCloudApi is unavailable after SDK initialization.");
+                var dyCloudApi = LiveOpenSdk.Instance.GetDyCloudApi();
+                if (dyCloudApi == null)
+                    throw new InvalidOperationException("LiveOpenSdk.Instance.GetDyCloudApi() returned null.");
 
                 var initParams = new DyCloudInitParams
                 {
+                    AppId = appId,
                     EnvId = cloudEnvId,
                     DefaultServiceId = cloudServiceId,
                     IsDebug = sdkDebug,
                     DebugIpAddress = string.Empty
                 };
-                await LiveOpenSdk.DyCloudApi.InitializeAsync(initParams);
+                await dyCloudApi.InitializeAsync(initParams);
                 if (destroying) return;
 
                 startRequested = true;
@@ -112,7 +111,7 @@ namespace LoliDesktopPet.DouyinLivePlay
                 await ConnectAndVerifyWebSocketAsync();
                 if (destroying) return;
 
-                Debug.Log("[DouyinLiveBootstrap] WebSocket OnOpen received. The transport is connected; real event delivery still requires verification in an authorized Douyin live room.");
+                Debug.LogWarning("[DouyinLiveBootstrap] ConnectWebSocket returned. This is not proof of an open socket or real event delivery; verify the SDK sample logs and receive an authorized live event.");
             }
             catch (Exception ex)
             {
@@ -126,7 +125,7 @@ namespace LoliDesktopPet.DouyinLivePlay
         {
             // Use the public response API so HTTP failures cannot be mistaken for an empty
             // or misleading function body.
-            var response = await LiveOpenSdk.DyCloudApi.CallContainerAsync(
+            var response = await LiveOpenSdk.Instance.GetDyCloudApi().CallContainerAsync(
                 path,
                 cloudServiceId,
                 "POST",
@@ -145,51 +144,10 @@ namespace LoliDesktopPet.DouyinLivePlay
 
         private async Task ConnectAndVerifyWebSocketAsync()
         {
-            var webSocket = LiveOpenSdk.DyCloudApi.WebSocket;
-            socketOpened = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-            // SampleDyCloudManager.ConnectWebSocket logs and swallows connection exceptions,
-            // so independently wait for the SDK's actual OnOpen event.
-            webSocket.OnOpen += HandleSocketOpen;
-            webSocket.OnError += HandleSocketError;
-
-            try
-            {
-                await cloudManager.ConnectWebSocket();
-                if (destroying) return;
-
-                Task timeout = Task.Delay(WebSocketOpenTimeoutSeconds * 1000);
-                Task completed = await Task.WhenAny(socketOpened.Task, timeout);
-                if (completed != socketOpened.Task)
-                    throw new TimeoutException(
-                        "WebSocket OnOpen was not received within " + WebSocketOpenTimeoutSeconds +
-                        " seconds. Check Cloud Env/Service IDs, callback path, SDK logs and Douyin permissions.");
-
-                await socketOpened.Task;
-            }
-            finally
-            {
-                webSocket.OnOpen -= HandleSocketOpen;
-                webSocket.OnError -= HandleSocketError;
-                socketOpened = null;
-            }
-        }
-
-        private void HandleSocketOpen()
-        {
-            socketOpened?.TrySetResult(true);
-        }
-
-        private void HandleSocketError(IDyCloudWebSocketError error)
-        {
-            // The SDK may reconnect automatically. Only fail immediately for a terminal error;
-            // otherwise the open timeout provides the final guard.
-            if (error == null || error.WillReconnect != true)
-            {
-                string detail = error != null ? error.RawMessage : "unknown WebSocket error";
-                socketOpened?.TrySetException(
-                    new InvalidOperationException("Douyin Cloud WebSocket terminal error: " + detail));
-            }
+            // Use the official SDK sample manager so it owns the SDK-specific message
+            // callback wiring. Do not infer a live connection from this method returning;
+            // only a real authorized event proves end-to-end delivery.
+            await cloudManager.ConnectWebSocket();
         }
 
         private async Task CleanupAsync(bool stopTasks)
