@@ -53,6 +53,33 @@ python3 bridge.py --port 17632 --file events.txt
 电脑防火墙要放行 `17632` 端口。查电脑局域网 IP（例如 Windows `ipconfig`，
 `192.168.x.x`），填进 App 设置页的「桥地址」，打开「直播联动」即可。
 
+## 直接对接开源抖音采集服务 douyinLive（推荐）
+
+上游项目：[jwwsjlm/douyinLive](https://github.com/jwwsjlm/douyinLive)。它负责连接抖音直播间并通过本地 WebSocket 输出已解析的消息；本仓库新增的 `douyinlive_ws_adapter.py` 负责把消息映射成桌宠事件。
+
+### 运行步骤
+
+1. 在电脑上下载并启动 [douyinLive Releases](https://github.com/jwwsjlm/douyinLive/releases)，默认监听 `127.0.0.1:1088`。
+2. 安装适配器依赖：
+
+   ```bash
+   python -m pip install websockets
+   ```
+
+3. 在仓库目录打开终端，运行以下命令。把 `你的直播间号` 换成目标直播间标识：
+
+   ```bash
+   cd tools/live-bridge
+   python3 douyinlive_ws_adapter.py --room 你的直播间号 \\
+     | python3 bridge.py --port 17632
+   ```
+
+   如果采集服务地址不是默认值，可增加 `--ws-base ws://127.0.0.1:1088`。
+
+4. 手机和电脑连接同一可信 Wi-Fi。在桌宠设置里填写电脑的局域网 IP、端口 `17632`，开启「直播联动」。
+
+适配器会自动重连，并将 `WebcastChatMessage`、`WebcastGiftMessage`、`WebcastLikeMessage`、`WebcastMemberMessage` 和关注类事件转换为桌宠协议。**这条链路已在代码层接入，但还需要在有网络和真实直播间的电脑上验证上游服务是否能成功取流、以及目标消息是否实际到达。** 礼物字段和关注事件会受上游协议、登录态和抖音策略影响，不能保证每个直播间都完整。
+
 ## 通过 DyHub 接入真实直播事件（可选）
 
 本仓库提供了一个标准库适配器 `dyhub_sse_adapter.py`，把兼容 DyHub 的 SSE 事件流转换成桌宠桥需要的 JSON-lines 格式。它**不是采集器**；电脑上必须先运行并连接好数据源。
