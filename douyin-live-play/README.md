@@ -15,7 +15,7 @@
 
 ## 本次新增的代码
 
-- `Assets/Scripts/PetLiveReactionController.cs`：标准化事件队列、去重、频率控制、角色 Animator 触发、台词气泡、安全的评论指令白名单。
+- `Assets/Scripts/PetLiveReactionController.cs`：标准化事件队列、去重、频率控制、角色 Animator 触发、台词气泡、安全的评论指令白名单，以及“观众合力给桌宠充能”的循环玩法。
 - `Assets/Scripts/DouyinCloudMessageAdapter.cs`：接收 SDK 示例 `SampleDyCloudManager.OnDyCloudMessage`，解析官方云消息数组，处理真实事件并上报消息 ACK。
 - `Assets/Scripts/DouyinLivePlayBootstrap.cs`：初始化官方 SDK 示例管理器，依次调用 `/start_game`、连接 `/websocket_callback`，退出时调用 `/finish_game` 并关闭连接。
 - `cloud/start_game.ts`：按当前直播上下文开启点赞、评论、礼物三个推送任务。
@@ -40,7 +40,7 @@
 3. 按官方文档建立抖音云服务，把 `cloud/start_game.ts`、`cloud/live_data_callback.ts`、`cloud/websocket_callback.ts` 分别配置为对应路径。
 4. 在 Unity 2022.3 LTS 项目中安装抖音官方 BGDT 与 LiveOpenSDK。官方 SDK 示例目录包含 `SampleDyCloudManager.cs`；将 SDK 的 Samples 复制到项目的 `Assets` 下，避免直接修改 Packages 内的文件。
 5. 在玩法启动代码中初始化 LiveOpenSDK，设置真实 `AppId`，初始化 `SampleDyCloudManager` 的 `EnvId` / `ServiceId` 后连接抖音云，并调用本目录 `DouyinCloudMessageAdapter.Bind(manager)`。
-6. 在 Unity 场景中挂载 `PetLiveReactionController`，绑定角色 Animator 与可选的气泡 UI。Animator 需要配置以下 Trigger 名称：`Like`、`Comment`、`Gift`、`BigGift`、`Dance`、`Heart`、`Wave`、`Hug`。按实际角色动画命名可修改映射。
+6. 在 Unity 场景中挂载 `PetLiveReactionController`，绑定角色 Animator 与可选的气泡 UI。Animator 需要配置以下 Trigger 名称：`Like`、`Comment`、`Gift`、`BigGift`、`Dance`、`Heart`、`Wave`、`Hug`、`Cheer`。将可选的 Slider 与 Text 绑定到能量进度 UI；每轮达到目标后会触发 `Cheer` 并重置进度。按实际角色动画命名可修改映射。
 7. 在抖音云 dev 环境完成联调，再按平台要求发布到正式环境和提审。不要把 App Secret、访问令牌或云端私钥提交到 Git。
 
 ## 事件履约与失败处理
@@ -49,6 +49,18 @@
 - 云端每条指令单独推送，保留平台的 `msg_id`，用于将履约回报对应到具体事件。
 - 启动任务时若点赞、评论、礼物中有任一项失败，会尝试停止已经成功启动的任务，避免半启动状态持续收数。
 - 这些逻辑仍需在真实 SDK 和抖音云 dev 环境联调，当前仓库代码本身不能证明平台已成功收到履约回报。
+
+## 可玩的互动循环
+
+这版不只把事件换成气泡文字，还加入了一个可重复的合作目标：**观众一起给桌宠充能，充满后触发庆祝动作并开启下一轮**。
+
+- 点赞：小幅增加能量，合并点赞数量会受到单次上限控制。
+- 评论指令：发送“跳舞 / 比心 / 挥手 / 抱抱”，触发对应动作并获得不同能量。
+- 礼物：按礼物数量增加能量。
+- 达到目标：触发 `Cheer`，显示完成提示并将能量归零进入下一轮。
+- 可在 Unity Inspector 中调整能量目标、单次增量上限、响应间隔；进度条与数字标签是可选 UI。
+
+这是已经写入源码的玩法逻辑，尚未在 Unity 场景中绑定真实角色动画和 UI。没有配置对应 Animator Trigger 时，控制器会输出警告，不会凭空生成角色动画。
 
 ## 事件表现
 
