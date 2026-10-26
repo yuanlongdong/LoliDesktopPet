@@ -38,6 +38,7 @@ import kotlin.random.Random
  *  - 可同时放 1~3 只（Prefs.petCount）
  *  - 头顶台词气泡（assets/lines.json，纯本地、不联网）
  *  - 贴边躲藏（松手吸附到屏幕边缘，闲置 12 秒缩进去只露半个身子）
+ * v1.9 起：可选的「直播联动」——收直播间事件（礼物/关注/点赞/弹幕/进场）做反应，默认关闭。
  *
  * 所有步骤都包在 try/catch 里并写入 [Diag]：
  * 手机上闪退看不到 logcat，所以宁可降级成「界面上显示错误」也不要让进程死掉。
@@ -53,6 +54,7 @@ class PetService : Service() {
         const val ACTION_STOP = "com.dshpet.android.action.STOP"
         const val ACTION_RELOAD = "com.dshpet.android.action.RELOAD"
         const val ACTION_LINES = "com.dshpet.android.action.LINES"
+        const val ACTION_LIVE_DEMO = "com.dshpet.android.action.LIVE_DEMO"
 
         fun start(ctx: Context) {
             val i = Intent(ctx, PetService::class.java).setAction(ACTION_START)
@@ -65,6 +67,11 @@ class PetService : Service() {
 
         fun reload(ctx: Context) {
             ctx.startService(Intent(ctx, PetService::class.java).setAction(ACTION_RELOAD))
+        }
+
+        /** 设置页「测试：来一条」：让桌宠对一条随机演示事件做出反应（不接桥也能看效果） */
+        fun liveDemo(ctx: Context) {
+            ctx.startService(Intent(ctx, PetService::class.java).setAction(ACTION_LIVE_DEMO))
         }
 
         /** 台词被改了：宠物立刻换用新台词，并当场说一句（宠物没在跑就什么都不做） */
@@ -86,6 +93,10 @@ class PetService : Service() {
     private var cfg: PetConfig? = null
     private var menuView: View? = null
     private var lines: Lines? = null
+
+    // ---- 直播联动 ----
+    private var liveReactor: LiveReactor? = null
+    private var liveBridge: LiveBridge? = null
 
     // ---- 台词气泡 ----
     private var bubbleRoot: View? = null
@@ -155,6 +166,7 @@ class PetService : Service() {
                     }
                     teardown()
                     spawnAll(Prefs.sizeDp(this))
+                    setupLive()
                 }
                 ACTION_LINES -> {
                     // 台词刚被改过：换用新台词，并当场说一句让用户看到效果
@@ -166,8 +178,18 @@ class PetService : Service() {
                         Diag.record(this, "刷新台词失败", t)
                     }
                 }
+                ACTION_LIVE_DEMO -> {
+                    // 设置页的测试按钮：不依赖网络，让桌宠对一条随机演示事件做反应
+                    Diag.record(this, "直播联动：测试一条演示事件")
+                    if (held.isEmpty()) {
+                        spawnAll(Prefs.sizeDp(this))
+                        setupLive()
+                    }
+                    liveReactor?.onEvent(randomDemoEvent())
+                }
                 else -> {
                     if (held.isEmpty()) spawnAll(Prefs.sizeDp(this))
+                    setupLive()
                 }
             }
             startTicker()
@@ -330,6 +352,7 @@ class PetService : Service() {
     }
 
     private fun teardown() {
+        teardownLive()
         handler.removeCallbacks(tickRunnable)
         dismissMenu()
         dismissBubble()
@@ -345,6 +368,60 @@ class PetService : Service() {
             }
         }
         held.clear()
+    }
+
+    // ------------------------------------------------------------ 直播联动
+
+    /**
+     * 直播联动是可选功能：默认关闭（保持零网络）。打开后：
+     *  1) 建一个 [LiveReactor]，把直播间事件翻译成桌宠反应；
+     *  2) 若填了桥地址，启动 [LiveBridge] 去连桥（断线会自动重连）。
+     * 桥不是必须的——不填地址，设置页的「测试：来一条」也能触发反应。
+     */
+    private fun setupLive() {
+        teardownLive()
+        if (!Prefs.liveOn(this)) return
+        val pet = held.firstOrNull()?.pet ?: return
+        val conf = cfg ?: return
+        liveReactor = LiveReactor(pet, conf) { cat -> sayFromLive(cat) }
+
+        val host = Prefs.liveHost(this)
+        if (host.isNotEmpty()) {
+            liveBridge = LiveBridge(
+                host = host,
+                port = Prefs.livePort(this),
+                onLine = { line ->
+                    val ev = parseLiveEvent(line)
+                    if (ev != null) liveReactor?.onEvent(ev)
+                },
+                onStatus = { msg -> Diag.record(this, "直播联动：$msg") },
+            ).also { it.start() }
+        }
+    }
+
+    private fun teardownLive() {
+        try {
+            liveBridge?.stop()
+        } catch (_: Throwable) {
+        }
+        liveBridge = null
+        liveReactor = null
+    }
+
+    /**
+     * 直播反应专用台词：不套普通碎碎念的 20s 总冷却（那会漏掉连续来的礼物），
+     * 节奏交给 [LiveReactor] 各自的冷却控制；仍尊重「碎碎念」总开关。
+     */
+    private fun sayFromLive(category: String) {
+        try {
+            if (!Prefs.bubbleOn(this)) return
+            val l = lines ?: return
+            val pet = bubblePet ?: held.firstOrNull()?.pet ?: return
+            val text = l.pick(category) ?: return
+            say(pet, text)
+        } catch (t: Throwable) {
+            Diag.record(this, "sayFromLive($category) 失败", t)
+        }
     }
 
     // ------------------------------------------------------------ 台词气泡
@@ -545,8 +622,6 @@ class PetService : Service() {
 
     /** 每秒跑一次：时段问候 + 闲置吐槽 */
     private fun tickSpeech(now: Long) {
-        if (held.isEmpty()) return
-
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         val period = periodOf(hour)
         if (period != null && period != lastPeriod) {
