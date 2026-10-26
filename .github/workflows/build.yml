@@ -32,25 +32,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+
       - name: Install Android SDK components
-        run: |
-          # GitHub-hosted Ubuntu runners already include Android command-line tools.
-          # Avoid android-actions/setup-android's legacy "tools" package, which no longer exists.
-          export ANDROID_HOME="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          echo "$ANDROID_HOME" >> "$GITHUB_ENV"
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       - name: Restore animation assets
         run: |
-          sudo ln -sf "$(which ffmpeg)" /usr/local/bin/ffmpeg
           chmod +x tools/fetch-and-transcode.sh
           ./tools/fetch-and-transcode.sh
 
       - name: Build debug APK
         run: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          SDK_PATH="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          echo "sdk.dir=$SDK_PATH" > local.properties
           ./gradlew :app:assembleDebug --no-daemon
 
       - name: Upload APK artifact
