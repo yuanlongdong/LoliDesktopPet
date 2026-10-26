@@ -53,6 +53,11 @@ class PetService : Service() {
         const val ACTION_STOP = "com.dshpet.android.action.STOP"
         const val ACTION_RELOAD = "com.dshpet.android.action.RELOAD"
         const val ACTION_LINES = "com.dshpet.android.action.LINES"
+        const val ACTION_LIVE_EVENT = "com.dshpet.android.action.LIVE_EVENT"
+        private const val EXTRA_LIVE_ID = "live_event_id"
+        private const val EXTRA_LIVE_TYPE = "live_event_type"
+        private const val EXTRA_LIVE_NICK = "live_event_nickname"
+        private const val EXTRA_LIVE_COUNT = "live_event_count"
 
         fun start(ctx: Context) {
             val i = Intent(ctx, PetService::class.java).setAction(ACTION_START)
@@ -65,6 +70,25 @@ class PetService : Service() {
 
         fun reload(ctx: Context) {
             ctx.startService(Intent(ctx, PetService::class.java).setAction(ACTION_RELOAD))
+        }
+
+        /**
+         * 将已校验的互动事件交给正在运行的桌宠服务。
+         * 此入口是应用内部桥接点，不代表已经连接真实抖音数据。
+         */
+        fun submitLiveEvent(ctx: Context, event: LiveEvent) {
+            if (!Prefs.running(ctx)) return
+            try {
+                val intent = Intent(ctx, PetService::class.java)
+                    .setAction(ACTION_LIVE_EVENT)
+                    .putExtra(EXTRA_LIVE_ID, event.eventId)
+                    .putExtra(EXTRA_LIVE_TYPE, event.type.name)
+                    .putExtra(EXTRA_LIVE_NICK, event.safeNickname())
+                    .putExtra(EXTRA_LIVE_COUNT, event.safeCount())
+                ctx.startService(intent)
+            } catch (t: Throwable) {
+                Diag.record(ctx, "提交直播互动事件失败", t)
+            }
         }
 
         /** 台词被改了：宠物立刻换用新台词，并当场说一句（宠物没在跑就什么都不做） */
@@ -102,6 +126,12 @@ class PetService : Service() {
     private var lastPeriod = ""
     private var tapCount = 0
     private var tapWindowMs = 0L
+
+    // ---- 直播互动（当前仅提供应用内部事件桥接，不含平台连接）----
+    private val liveQueue = LiveEventQueue()
+    private val liveLikeLimiter = LiveEventRateLimiter(900L)
+    private val liveCommentLimiter = LiveEventRateLimiter(1800L)
+    private var liveDrainScheduled = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -165,6 +195,9 @@ class PetService : Service() {
                     } catch (t: Throwable) {
                         Diag.record(this, "刷新台词失败", t)
                     }
+                }
+                ACTION_LIVE_EVENT -> {
+                    acceptLiveIntent(intent)
                 }
                 else -> {
                     if (held.isEmpty()) spawnAll(Prefs.sizeDp(this))
@@ -345,6 +378,55 @@ class PetService : Service() {
             }
         }
         held.clear()
+    }
+
+    // ------------------------------------------------------------ 直播互动事件桥接
+
+    private fun acceptLiveIntent(intent: Intent?) {
+        if (intent == null) return
+        val id = intent.getStringExtra(EXTRA_LIVE_ID).orEmpty()
+        val type = runCatching {
+            LiveEvent.Type.valueOf(intent.getStringExtra(EXTRA_LIVE_TYPE).orEmpty())
+        }.getOrNull() ?: return
+        val event = LiveEvent(
+            eventId = id,
+            type = type,
+            nickname = intent.getStringExtra(EXTRA_LIVE_NICK).orEmpty(),
+            count = intent.getIntExtra(EXTRA_LIVE_COUNT, 1),
+        )
+        if (!liveQueue.offer(event)) return
+        scheduleLiveDrain(0L)
+    }
+
+    private fun scheduleLiveDrain(delayMs: Long = 1600L) {
+        if (liveDrainScheduled) return
+        liveDrainScheduled = true
+        handler.postDelayed({
+            liveDrainScheduled = false
+            try {
+                val event = liveQueue.poll() ?: return@postDelayed
+                val now = SystemClock.uptimeMillis()
+                val allowed = when (event.type) {
+                    LiveEvent.Type.LIKE -> liveLikeLimiter.allow(now)
+                    LiveEvent.Type.COMMENT_MENTION -> liveCommentLimiter.allow(now)
+                    else -> true
+                }
+                if (allowed && held.isNotEmpty()) {
+                    val conf = cfg
+                    val pet = held.firstOrNull()?.pet
+                    if (conf != null && pet != null) {
+                        val reaction = PetReactionMapper.map(event, conf)
+                        lastInteractMs = now
+                        say(pet, reaction.message)
+                        if (reaction.actionSlug.isNotBlank()) pet.playAction(reaction.actionSlug)
+                    }
+                }
+            } catch (t: Throwable) {
+                Diag.record(this, "处理直播互动事件失败", t)
+            } finally {
+                if (liveQueue.size() > 0) scheduleLiveDrain(1800L)
+            }
+        }, delayMs.coerceAtLeast(0L))
     }
 
     // ------------------------------------------------------------ 台词气泡
