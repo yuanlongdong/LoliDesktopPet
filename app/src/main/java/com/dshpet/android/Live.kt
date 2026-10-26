@@ -110,21 +110,21 @@ class LiveReactor(
         when (e.type) {
             LiveType.GIFT -> {
                 pet.bounce()
-                say(e.category)
+                say(e.type.category)
             }
             LiveType.GIFT_BIG -> {
                 pet.bounce()
                 celebrate()?.let { pet.playAction(it) }
-                say(e.category)
+                say(e.type.category)
             }
             LiveType.FOLLOW -> {
                 pet.bounce()
                 celebrate()?.let { pet.playAction(it) }
-                say(e.category)
+                say(e.type.category)
             }
             LiveType.LIKE -> {
                 pet.bounce()
-                say(e.category)
+                say(e.type.category)
             }
             LiveType.COMMENT -> {
                 if (keywordSet.any { it in e.text }) {
@@ -132,9 +132,9 @@ class LiveReactor(
                 } else {
                     pet.bounce()
                 }
-                say(e.category)
+                say(e.type.category)
             }
-            LiveType.ENTER -> say(e.category)
+            LiveType.ENTER -> say(e.type.category)
         }
         return true
     }
