@@ -67,7 +67,7 @@ python3 tools/live-bridge/mock.py | python3 tools/live-bridge/bridge.py --port 1
 ```
 
 - 桥与协议的完整说明（事件字段 / 类型 / 反应 / 接真实抖音数据）：[tools/live-bridge/protocol.md](tools/live-bridge/protocol.md)
-- 桌宠只负责「收到事件 → 反应」，**不负责去抖音抓数据**；抖音数据的获取由你选用的数据源完成（第三方工具或自己写脚本 pipe 给桥），接入行为与本项目无关
+- 已加入真实采集适配器 `tools/live-bridge/douyinlive_ws_adapter.py`，可对接开源采集服务 [jwwsjlm/douyinLive](https://github.com/jwwsjlm/douyinLive)。先启动采集服务，再用适配器将弹幕、礼物、点赞、进场、关注转换为桌宠事件；完整命令见 `tools/live-bridge/protocol.md`。
 - 每个事件类型有独立冷却（礼物最勤、点赞/进场最克制），直播弹幕很密也不会刷屏
 
 ## 手感为什么和电脑版一致
@@ -152,7 +152,7 @@ tools/
 ├─ gen-config.mjs            插件配置 → 手机配置（含中文动画名）
 ├─ fetch-and-transcode.*     一键还原素材
 ├─ verify_webp.py            素材校验
-└─ live-bridge/              直播联动桥（bridge.py 转发 + mock.py 模拟 + protocol.md 协议）
+└─ live-bridge/              直播联动桥（bridge.py 转发、mock.py 模拟、douyinlive_ws_adapter.py / dyhub_sse_adapter.py 真实数据适配）
 ```
 
 ## 已知限制 / 可以贡献的方向
