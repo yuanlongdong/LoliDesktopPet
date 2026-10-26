@@ -1,0 +1,3 @@
+[submodule "research/dsh-pet-android"]
+	path = research/dsh-pet-android
+	url = https://github.com/Tony-Chen-Stark/dsh-pet-android.git
