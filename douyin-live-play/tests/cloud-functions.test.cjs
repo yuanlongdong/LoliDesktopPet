@@ -136,3 +136,17 @@ test("finish_game reports partial stop failures", async () => {
   assert.equal(result.err_no, 1);
   assert.equal(result.data.live_like.ok, false);
 });
+
+test("callback safely ignores an empty platform batch", async () => {
+  const ctx = context({ headers: { "x-anchor-openid": "anchor-test", "x-msg-type": "live_like" } });
+  const result = await loadFunction("live_data_callback.ts")([], ctx);
+  assert.equal(result, "success");
+  assert.equal(ctx.calls.length, 0);
+});
+
+test("callback rejects a non-empty batch without message IDs", async () => {
+  const ctx = context({ headers: { "x-anchor-openid": "anchor-test", "x-msg-type": "live_like" } });
+  const result = await loadFunction("live_data_callback.ts")([{ msg_type_str: "live_like" }], ctx);
+  assert.equal(result, "invalid payload");
+  assert.equal(ctx.calls.length, 0);
+});
