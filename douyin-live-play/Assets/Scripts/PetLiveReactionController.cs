@@ -320,7 +320,9 @@ namespace LoliDesktopPet.DouyinLivePlay
                 bubbleGroup.interactable = false;
                 bubbleGroup.blocksRaycasts = false;
                 bubbleGroup.gameObject.SetActive(true);
-                visible = bubbleGroup.gameObject.activeInHierarchy;
+                // A visible container without its text is not sufficient to claim fulfillment.
+                visible = bubbleText != null && bubbleGroup.gameObject.activeInHierarchy &&
+                    bubbleText.gameObject.activeInHierarchy;
             }
             hasBubble = visible;
             bubbleUntil = Time.unscaledTime + Mathf.Max(0.5f, bubbleDurationSeconds);
