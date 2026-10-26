@@ -1,0 +1,9 @@
+<view class="page">
+  <view class="title">桌宠直播互动</view>
+  <view class="subtitle">通过抖音开放能力接收真实直播间事件</view>
+  <view class="status">{{statusText}}</view>
+  <view class="event">{{lastEvent}}</view>
+  <view class="hint">首次使用需要在开放平台申请点赞、评论、礼物数据权限，并在真实直播间环境调试。</view>
+  <button type="primary" bindtap="start">开启互动</button>
+  <button bindtap="stop">关闭互动</button>
+</view>
