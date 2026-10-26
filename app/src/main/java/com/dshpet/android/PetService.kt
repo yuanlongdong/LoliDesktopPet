@@ -414,10 +414,19 @@ class PetService : Service() {
      */
     private fun sayFromLive(category: String) {
         try {
-            if (!Prefs.bubbleOn(this)) return
-            val l = lines ?: return
-            val pet = bubblePet ?: held.firstOrNull()?.pet ?: return
-            val text = l.pick(category) ?: return
+            // 直播事件的欢迎/感谢语不受普通「碎碎念」开关控制。
+            // 该开关只管理日常闲聊，不能让直播间进人后静默。
+            val l = lines ?: Lines.get(this).also { lines = it }
+            val pet = bubblePet ?: held.firstOrNull()?.pet
+            if (pet == null) {
+                Diag.record(this, "直播台词未显示：没有可用桌宠 category=$category")
+                return
+            }
+            val text = l.pick(category)
+            if (text.isNullOrBlank()) {
+                Diag.record(this, "直播台词为空：category=$category source=${l.source}")
+                return
+            }
             say(pet, text)
         } catch (t: Throwable) {
             Diag.record(this, "sayFromLive($category) 失败", t)
