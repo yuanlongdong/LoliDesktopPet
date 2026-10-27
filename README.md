@@ -127,9 +127,7 @@ echo "sdk.dir=/path/to/android-sdk" > local.properties
 python tools/verify_webp.py
 ```
 
-CI：把 `ci/build.yml.example` 复制成 `.github/workflows/build.yml` 即可启用
-（push 与 PR 自动还原素材并构建 APK）。GitHub 要求推送 workflow 文件时 token 带
-`workflow` 权限，所以它没有随首次提交一起推上去，需要手动加一次。
+CI：仓库已启用 `.github/workflows/build.yml`。推送到 `main` 或手动触发 `workflow_dispatch` 后，会自动还原动画素材、构建 APK，并将 APK 上传为 `desk-pet-debug-apk` 构建产物；非 PR 构建还会创建一个 `build-<提交 SHA>` 预发布 Release。构建记录在仓库的 Actions 页面，安装包在对应构建的 Artifacts 或 Releases 中。由于动画素材来自上游且体积较大，首次构建会先下载并转码素材，耗时可能较长。
 
 ## 代码结构
 
