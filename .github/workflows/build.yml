@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -74,3 +74,18 @@ jobs:
           name: desk-pet-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Publish APK release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.sha }}
+          name: Android 桌宠 APK ${{ github.sha }}
+          target_commitish: ${{ github.sha }}
+          body: |
+            由 GitHub Actions 从当前提交自动构建的 Android 桌宠调试版 APK。
+            构建提交：${{ github.sha }}
+            构建记录：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          draft: false
+          prerelease: true
+          files: app/build/outputs/apk/debug/app-debug.apk
