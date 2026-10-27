@@ -59,8 +59,12 @@ jobs:
 
       - name: Restore animation assets
         run: |
-          chmod +x tools/fetch-and-transcode.sh
-          ./tools/fetch-and-transcode.sh
+          if [ -d app/src/main/assets/webp ] && [ -f anim-map.json ] && [ -f app/src/main/assets/pet-config.json ]; then
+            echo "Cached animation assets found; skipping download and transcoding."
+          else
+            chmod +x tools/fetch-and-transcode.sh
+            ./tools/fetch-and-transcode.sh
+          fi
 
       - name: Build debug APK
         run: |
